@@ -20,7 +20,8 @@ import {
   RefreshCw,
   Maximize2,
   Save,
-  Download
+  Download,
+  Zap
 } from "lucide-react";
 import {
   LineChart,
@@ -33,6 +34,7 @@ import {
   ReferenceLine
 } from "recharts";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
 
 // More realistic curve generation
 const generateTestPoints = (maxPoints = 100) => {
@@ -83,6 +85,11 @@ export default function HorizonDashboard() {
   const [loadCell] = useState("STDM-100kN");
   const [testMethod] = useState("Tensile ISO 527-2");
   
+  // Demo State
+  const [isDemoActive, setIsDemoActive] = useState(false);
+  const [demoStep, setDemoStep] = useState(0);
+  const [demoMessage, setDemoMessage] = useState("");
+
   // Sequence Tracking
   const [sequenceStatus, setSequenceStatus] = useState({
     grip: "Done",
@@ -128,6 +135,37 @@ export default function HorizonDashboard() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isRunning]);
 
+  // Demo Logic
+  const startDemo = async () => {
+    if (isDemoActive || isRunning) return;
+    
+    setIsDemoActive(true);
+    setActiveTab("test");
+    
+    const steps = [
+      { msg: "Шаг 1: Подготовка образца и обнуление системы...", action: () => { setLiveMetrics({ force: 0, extension: 0, stress: 0, strain: 0 }); toast.info("Система обнулена"); } },
+      { msg: "Шаг 2: Проверка захватов и удаление слабины...", action: () => { setSequenceStatus(s => ({ ...s, grip: "Done", slack: "Done" })); } },
+      { msg: "Шаг 3: Запуск испытания по методу ISO 527-2...", action: () => { handleStart(); } },
+      { msg: "Шаг 4: Сбор данных и построение кривой в реальном времени...", action: () => {} },
+      { msg: "Шаг 5: Обнаружение пиковой нагрузки и завершение...", action: () => {} },
+      { msg: "Шаг 6: Сохранение результатов в базу данных...", action: () => { toast.success("Данные успешно сохранены"); } },
+      { msg: "Демонстрация завершена. Система готова к работе.", action: () => { setIsDemoActive(false); setDemoMessage(""); } }
+    ];
+
+    for (let i = 0; i < steps.length; i++) {
+      setDemoStep(i);
+      setDemoMessage(steps[i].msg);
+      steps[i].action();
+      
+      // Wait for test to finish if we are at step 3
+      if (i === 3) {
+        await new Promise(r => setTimeout(r, 8000));
+      } else {
+        await new Promise(r => setTimeout(r, 3000));
+      }
+    }
+  };
+
   const handleStart = () => {
     if (machineStatus !== "Online") {
       toast.error("Machine must be ONLINE to start test");
@@ -162,7 +200,6 @@ export default function HorizonDashboard() {
       timestamp: new Date().toLocaleString()
     };
     
-    // Simulate file generation
     const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -202,7 +239,36 @@ export default function HorizonDashboard() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-[#0f172a] text-slate-200 font-sans overflow-hidden select-none">
+    <div className="flex h-screen w-full bg-[#0f172a] text-slate-200 font-sans overflow-hidden select-none relative">
+      {/* Demo Overlay */}
+      <AnimatePresence>
+        {isDemoActive && demoMessage && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-blue-600 px-6 py-4 rounded-xl shadow-2xl border border-blue-400 flex items-center gap-4 min-w-[500px]"
+          >
+            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center animate-spin">
+              <RefreshCw size={16} />
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase text-blue-200 tracking-widest mb-1">Demo Mode Active • Step {demoStep + 1}/7</p>
+              <p className="text-sm font-bold text-white tracking-tight">{demoMessage}</p>
+            </div>
+            <Button 
+              size="sm" 
+              variant="ghost" 
+              className="ml-auto text-white hover:bg-white/10"
+              onClick={() => { setIsDemoActive(false); handleStop(false); }}
+            >
+              Skip Demo
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar - Tinius Olsen style */}
       <aside className="w-16 bg-[#020617] flex flex-col items-center py-4 gap-6 border-r border-slate-800 z-30">
         <div className="w-10 h-10 bg-blue-600 rounded flex items-center justify-center text-white font-black text-xl mb-4 shadow-lg shadow-blue-900/20">
           TO
@@ -211,11 +277,28 @@ export default function HorizonDashboard() {
         <NavItem icon={<Database size={22} />} active={activeTab === "data"} onClick={() => setActiveTab("data")} label="Batch Data" />
         <NavItem icon={<FileText size={22} />} active={activeTab === "reports"} onClick={() => setActiveTab("reports")} label="Report Center" />
         <NavItem icon={<Settings size={22} />} active={activeTab === "settings"} onClick={() => setActiveTab("settings")} label="Configuration" />
+        
+        {/* NEW DEMO BUTTON */}
+        <div className="w-full h-[1px] bg-slate-800 my-2" />
+        <button
+          onClick={startDemo}
+          disabled={isDemoActive || isRunning}
+          className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all group relative ${
+            isDemoActive ? "bg-amber-600 text-white shadow-lg" : "text-amber-500 hover:bg-amber-500/10 hover:text-amber-400"
+          } disabled:opacity-50`}
+        >
+          <Zap size={22} fill={isDemoActive ? "currentColor" : "none"} />
+          <div className="absolute left-16 bg-amber-600 text-white text-[9px] px-2 py-1.5 rounded font-black opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0 whitespace-nowrap pointer-events-none uppercase tracking-widest z-50 shadow-2xl">
+            Run Demo Cycle
+          </div>
+        </button>
+
         <div className="mt-auto flex flex-col gap-4">
           <NavItem icon={<RefreshCw size={22} />} active={false} onClick={() => window.location.reload()} label="Refresh System" />
         </div>
       </aside>
 
+      {/* Main Content */}
       <main className="flex-1 flex flex-col relative overflow-hidden bg-slate-950">
         <header className="h-12 bg-[#1e293b] border-b border-slate-700 flex items-center justify-between px-4 shadow-md z-20">
           <div className="flex items-center gap-6">
