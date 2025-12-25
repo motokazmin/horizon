@@ -48,53 +48,41 @@ import {
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Professional Stress-Strain curve generation
+// Optimized Professional Stress-Strain curve generation
 const generateTestPoints = (maxPoints = 200) => {
   const points = [];
-  const E = 2100; // Young's Modulus (Steeper elastic slope)
-  const yieldPoint = 1.2; // Strain at yield
-  const ultimateStrain = 15.0; // Strain at fracture
+  const E = 450; // Adjusted Modulus for better visual presentation on standard axes
+  const yieldPoint = 2.0; 
+  const ultimateStrain = 15.0; 
   
   for (let i = 0; i <= maxPoints; i++) {
     const strain = (i / maxPoints) * ultimateStrain;
     let stress = 0;
 
     if (strain <= yieldPoint) {
-      // Linear Elastic Region
       stress = E * strain;
     } else {
-      // Plastic Region with Strain Hardening
       const yieldStress = E * yieldPoint;
       const plasticStrain = strain - yieldPoint;
-      // Power law for hardening: σ = σy + K * εp^n
-      stress = yieldStress + 350 * Math.pow(plasticStrain, 0.45);
+      stress = yieldStress + 120 * Math.pow(plasticStrain, 0.55);
       
-      // Necking simulation near fracture
-      if (strain > ultimateStrain * 0.8) {
-        const neckingFactor = (strain - ultimateStrain * 0.8) / (ultimateStrain * 0.2);
-        stress = stress * (1 - neckingFactor * 0.15);
+      if (strain > ultimateStrain * 0.85) {
+        const neckingFactor = (strain - ultimateStrain * 0.85) / (ultimateStrain * 0.15);
+        stress = stress * (1 - neckingFactor * 0.12);
       }
     }
 
-    // High-frequency sensor noise simulation (very subtle)
-    stress += (Math.random() - 0.5) * 5;
+    stress += (Math.random() - 0.5) * 3;
     
     points.push({
-      extension: (strain * 0.5).toFixed(3), // mm
-      stress: Math.max(0, stress).toFixed(2), // MPa
-      force: (stress * 0.12).toFixed(2), // N (assuming 12mm2 area)
-      strain: strain.toFixed(3) // %
+      extension: (strain * 0.5).toFixed(3), 
+      stress: Math.max(0, stress).toFixed(2), 
+      force: (stress * 0.12).toFixed(2), 
+      strain: strain.toFixed(3) 
     });
   }
   return points;
 };
-
-const historicalData = [
-  { batch: "B-202", avgStress: 45.2, date: "2025-12-20" },
-  { batch: "B-203", avgStress: 48.7, date: "2025-12-21" },
-  { batch: "B-204", avgStress: 42.1, date: "2025-12-22" },
-  { batch: "B-205", avgStress: 50.3, date: "2025-12-23" },
-];
 
 export default function HorizonDashboard() {
   const [activeTab, setActiveTab] = useState("test");
@@ -118,15 +106,11 @@ export default function HorizonDashboard() {
   const [loadCell, setLoadCell] = useState("STDM-100kN");
   const [testMethod] = useState("Tensile ISO 527-2");
   
-  // Demo State
   const [isDemoActive, setIsDemoActive] = useState(false);
   const [demoStep, setDemoStep] = useState(0);
   const [demoMessage, setDemoMessage] = useState("");
-
-  // Visual Overlay State
   const [isSafetyDoorClosed, setIsSafetyDoorClosed] = useState(true);
 
-  // Sequence Tracking
   const [sequenceStatus, setSequenceStatus] = useState({
     grip: "Done",
     slack: "Done",
@@ -138,8 +122,13 @@ export default function HorizonDashboard() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const dataCounterRef = useRef(0);
   const fullCurveRef = useRef(generateTestPoints(200));
+  const isDemoActiveRef = useRef(false);
 
   const activeSample = samples.find(s => s.id === activeSampleId) || samples[0];
+
+  useEffect(() => {
+    isDemoActiveRef.current = isDemoActive;
+  }, [isDemoActive]);
 
   useEffect(() => {
     if (isRunning) {
@@ -150,7 +139,7 @@ export default function HorizonDashboard() {
       
       timerRef.current = setInterval(() => {
         if (dataCounterRef.current < fullCurveRef.current.length) {
-          const point = fullCurveRef.current[dataCounterRef.counter || dataCounterRef.current];
+          const point = fullCurveRef.current[dataCounterRef.current];
           setCurrentData(prev => [...prev, point]);
           setLiveMetrics(prev => ({
             ...prev,
@@ -165,20 +154,22 @@ export default function HorizonDashboard() {
             handleStop(true);
           }
         }
-      }, 40); // Faster acquisition for smoother curve
+      }, 40); 
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isRunning]);
 
-  // Demo Logic
   const startDemo = async () => {
     if (isDemoActive || isRunning) return;
     
     setIsDemoActive(true);
     setActiveTab("test");
     
+    const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+    const checkAbort = () => !isDemoActiveRef.current;
+
     const steps = [
       { msg: "Системный чек: Дверца безопасности закрыта...", action: () => { setIsSafetyDoorClosed(true); toast.success("Interlock Secure"); } },
       { msg: "Шаг 1: Подготовка образца и обнуление системы...", action: () => { setLiveMetrics(prev => ({ ...prev, force: 0, extension: 0, stress: 0, strain: 0 })); toast.info("Система обнулена"); } },
@@ -191,17 +182,16 @@ export default function HorizonDashboard() {
     ];
 
     for (let i = 0; i < steps.length; i++) {
+      if (checkAbort()) break;
       setDemoStep(i);
       setDemoMessage(steps[i].msg);
       steps[i].action();
       
       if (i === 3) {
-        await new Promise(r => setTimeout(r, 8500));
+        await sleep(9000); 
       } else {
-        await new Promise(r => setTimeout(r, 3000));
+        await sleep(3000);
       }
-      
-      if (!isDemoActive) break;
     }
   };
 
@@ -223,7 +213,7 @@ export default function HorizonDashboard() {
     if (timerRef.current) clearInterval(timerRef.current);
     
     if (completed) {
-      const peakStress = Math.max(...currentData.map(d => parseFloat(d.stress)));
+      const peakStress = fullCurveRef.current.reduce((max, p) => Math.max(max, parseFloat(p.stress)), 0);
       setSamples(prev => prev.map(s => 
         s.id === activeSampleId ? { ...s, status: "Completed", result: peakStress.toFixed(2) + " MPa" } : s
       ));
@@ -475,8 +465,19 @@ export default function HorizonDashboard() {
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={currentData}>
                           <CartesianGrid strokeDasharray="3 3" vertical={true} stroke="#334155" />
-                          <XAxis dataKey="strain" type="number" domain={[0, 'auto']} tick={{fontSize: 9, fill: '#64748b'}} />
-                          <YAxis tick={{fontSize: 9, fill: '#64748b'}} />
+                          <XAxis 
+                            dataKey="strain" 
+                            type="number" 
+                            domain={[0, 16]} 
+                            tick={{fontSize: 9, fill: '#64748b'}} 
+                            label={{ value: 'Strain (%)', position: 'bottom', offset: -5, fontSize: 10, fill: '#475569' }}
+                          />
+                          <YAxis 
+                            type="number"
+                            domain={[0, 1200]}
+                            tick={{fontSize: 9, fill: '#64748b'}} 
+                            label={{ value: 'Stress (MPa)', angle: -90, position: 'left', offset: 10, fontSize: 10, fill: '#475569' }}
+                          />
                           <Tooltip contentStyle={{ backgroundColor: '#020617', border: '1px solid #334155', fontSize: '10px' }} />
                           <Line type="monotone" dataKey="stress" stroke="#3b82f6" strokeWidth={3} dot={false} isAnimationActive={false} />
                         </LineChart>
@@ -633,45 +634,23 @@ export default function HorizonDashboard() {
                       <Cpu size={18} />
                       <h3 className="text-xs font-black uppercase tracking-widest">Hardware Registry</h3>
                     </div>
-                    
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black text-slate-500 uppercase">Load Cell Interface</Label>
-                        <select 
-                          className="w-full h-10 bg-slate-900 border-slate-700 rounded-md px-3 text-xs font-bold text-slate-300 outline-none focus:ring-2 ring-blue-500"
-                          value={loadCell}
-                          onChange={(e) => setLoadCell(e.target.value)}
-                        >
+                        <select className="w-full h-10 bg-slate-900 border-slate-700 rounded-md px-3 text-xs font-bold text-slate-300 outline-none focus:ring-2 ring-blue-500" value={loadCell} onChange={(e) => setLoadCell(e.target.value)}>
                           <option>STDM-100kN (S/N 8821)</option>
                           <option>STDM-50kN (S/N 4412)</option>
                           <option>STDM-10kN (S/N 2102)</option>
                         </select>
                       </div>
-
                       <div className="space-y-2">
                         <Label className="text-[10px] font-black text-slate-500 uppercase">Frame Status</Label>
-                        <select 
-                          className="w-full h-10 bg-slate-900 border-slate-700 rounded-md px-3 text-xs font-bold text-slate-300 outline-none focus:ring-2 ring-blue-500"
-                          value={machineStatus}
-                          onChange={(e) => setMachineStatus(e.target.value)}
-                        >
+                        <select className="w-full h-10 bg-slate-900 border-slate-700 rounded-md px-3 text-xs font-bold text-slate-300 outline-none focus:ring-2 ring-blue-500" value={machineStatus} onChange={(e) => setMachineStatus(e.target.value)}>
                           <option>Online</option>
                           <option>Offline</option>
                           <option>Simulation Mode</option>
                         </select>
                       </div>
-                    </div>
-
-                    <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-800 space-y-3">
-                      <div className="flex justify-between items-center text-[10px] font-bold">
-                        <span className="text-slate-500 uppercase">Firmware</span>
-                        <span className="text-slate-300">v4.8.2-PRO</span>
-                      </div>
-                      <div className="flex justify-between items-center text-[10px] font-bold">
-                        <span className="text-slate-500 uppercase">Comm Link</span>
-                        <span className="text-green-500">ETHERNET/IP</span>
-                      </div>
-                      <Button variant="outline" className="w-full h-8 text-[10px] font-black border-slate-700 uppercase">Sync Hardware</Button>
                     </div>
                   </Card>
 
@@ -680,7 +659,6 @@ export default function HorizonDashboard() {
                       <Shield size={18} />
                       <h3 className="text-xs font-black uppercase tracking-widest">Security & Interlocks</h3>
                     </div>
-
                     <div className="space-y-4">
                       <div className="flex items-center justify-between p-4 bg-slate-900/30 border border-slate-800 rounded-xl">
                         <div className="flex items-center gap-3">
@@ -690,34 +668,9 @@ export default function HorizonDashboard() {
                             <p className="text-[9px] font-bold text-slate-500">{isSafetyDoorClosed ? "Active & Locked" : "Warning: Interlock Bypassed"}</p>
                           </div>
                         </div>
-                        <Button 
-                          variant={isSafetyDoorClosed ? "outline" : "destructive"} 
-                          size="sm" 
-                          className="h-8 text-[9px] font-black uppercase"
-                          onClick={() => setIsSafetyDoorClosed(!isSafetyDoorClosed)}
-                        >
+                        <Button variant={isSafetyDoorClosed ? "outline" : "destructive"} size="sm" className="h-8 text-[9px] font-black uppercase" onClick={() => setIsSafetyDoorClosed(!isSafetyDoorClosed)}>
                           {isSafetyDoorClosed ? "Open Door" : "Close Door"}
                         </Button>
-                      </div>
-
-                      <div className="flex items-center justify-between p-4 bg-slate-900/30 border border-slate-800 rounded-xl opacity-50">
-                        <div className="flex items-center gap-3">
-                          <Radio size={20} className="text-blue-500" />
-                          <div>
-                            <p className="text-xs font-black text-white uppercase tracking-tight">Remote LIMS Sync</p>
-                            <p className="text-[9px] font-bold text-slate-500">Cloud Data Mirroring</p>
-                          </div>
-                        </div>
-                        <div className="text-[8px] font-black text-slate-600 border border-slate-700 px-2 py-1 rounded">DISABLED</div>
-                      </div>
-                    </div>
-
-                    <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
-                      <div className="flex items-start gap-2">
-                        <AlertTriangle size={14} className="text-amber-500 mt-0.5" />
-                        <p className="text-[10px] font-bold text-amber-200 leading-tight uppercase tracking-tight">
-                          Calibration expires in 172 days. Schedule professional verification to maintain ISO compliance.
-                        </p>
                       </div>
                     </div>
                   </Card>
@@ -733,12 +686,7 @@ export default function HorizonDashboard() {
 
 function NavItem({ icon, active, onClick, label }: { icon: React.ReactNode; active: boolean; onClick: () => void; label: string }) {
   return (
-    <button
-      onClick={onClick}
-      className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all group relative ${
-        active ? "bg-blue-600 text-white shadow-xl shadow-blue-900/20 scale-110" : "text-slate-500 hover:bg-slate-800 hover:text-slate-300"
-      }`}
-    >
+    <button onClick={onClick} className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all group relative ${active ? "bg-blue-600 text-white shadow-xl shadow-blue-900/20 scale-110" : "text-slate-500 hover:bg-slate-800 hover:text-slate-300"}`}>
       {icon}
       <div className="absolute left-16 bg-[#020617] text-white text-[9px] px-2 py-1.5 rounded font-black opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0 whitespace-nowrap pointer-events-none uppercase tracking-widest border border-slate-800 z-50 shadow-2xl">
         {label}
@@ -777,11 +725,7 @@ function ValueCard({ label, value, unit, icon, color = "text-white" }: { label: 
 
 function HardwareBtn({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
   return (
-    <Button 
-      variant="outline" 
-      onClick={onClick}
-      className="flex flex-col h-16 gap-1.5 bg-slate-900 border-slate-700 hover:bg-blue-600 hover:border-blue-500 hover:text-white transition-all group shadow-inner"
-    >
+    <Button variant="outline" onClick={onClick} className="flex flex-col h-16 gap-1.5 bg-slate-900 border-slate-700 hover:bg-blue-600 hover:border-blue-500 hover:text-white transition-all group shadow-inner">
       {icon}
       <span className="text-[8px] font-black uppercase text-slate-500 group-hover:text-white leading-none">{label}</span>
     </Button>
