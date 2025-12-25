@@ -32,7 +32,8 @@ import {
   Clock,
   Shield,
   Cpu,
-  Radio
+  Radio,
+  AlertTriangle
 } from "lucide-react";
 import {
   LineChart,
@@ -47,26 +48,45 @@ import {
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
-// More realistic curve generation
-const generateTestPoints = (maxPoints = 100) => {
-  return Array.from({ length: maxPoints }, (_, i) => {
-    const strain = i * 0.2;
+// Professional Stress-Strain curve generation
+const generateTestPoints = (maxPoints = 200) => {
+  const points = [];
+  const E = 2100; // Young's Modulus (Steeper elastic slope)
+  const yieldPoint = 1.2; // Strain at yield
+  const ultimateStrain = 15.0; // Strain at fracture
+  
+  for (let i = 0; i <= maxPoints; i++) {
+    const strain = (i / maxPoints) * ultimateStrain;
     let stress = 0;
-    const E = 1500; 
-    const yieldStrain = 2;
-    if (strain < yieldStrain) {
+
+    if (strain <= yieldPoint) {
+      // Linear Elastic Region
       stress = E * strain;
     } else {
-      stress = E * yieldStrain + 200 * Math.pow(strain - yieldStrain, 0.5);
+      // Plastic Region with Strain Hardening
+      const yieldStress = E * yieldPoint;
+      const plasticStrain = strain - yieldPoint;
+      // Power law for hardening: σ = σy + K * εp^n
+      stress = yieldStress + 350 * Math.pow(plasticStrain, 0.45);
+      
+      // Necking simulation near fracture
+      if (strain > ultimateStrain * 0.8) {
+        const neckingFactor = (strain - ultimateStrain * 0.8) / (ultimateStrain * 0.2);
+        stress = stress * (1 - neckingFactor * 0.15);
+      }
     }
-    stress += (Math.random() - 0.5) * 20;
-    return {
-      extension: strain.toFixed(2),
-      stress: Math.max(0, stress).toFixed(2),
-      force: (stress * 0.1).toFixed(2),
-      strain: strain.toFixed(2)
-    };
-  });
+
+    // High-frequency sensor noise simulation (very subtle)
+    stress += (Math.random() - 0.5) * 5;
+    
+    points.push({
+      extension: (strain * 0.5).toFixed(3), // mm
+      stress: Math.max(0, stress).toFixed(2), // MPa
+      force: (stress * 0.12).toFixed(2), // N (assuming 12mm2 area)
+      strain: strain.toFixed(3) // %
+    });
+  }
+  return points;
 };
 
 const historicalData = [
@@ -117,7 +137,7 @@ export default function HorizonDashboard() {
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const dataCounterRef = useRef(0);
-  const fullCurveRef = useRef(generateTestPoints(150));
+  const fullCurveRef = useRef(generateTestPoints(200));
 
   const activeSample = samples.find(s => s.id === activeSampleId) || samples[0];
 
@@ -125,12 +145,12 @@ export default function HorizonDashboard() {
     if (isRunning) {
       dataCounterRef.current = 0;
       setCurrentData([]);
-      fullCurveRef.current = generateTestPoints(150);
+      fullCurveRef.current = generateTestPoints(200);
       setSequenceStatus(prev => ({ ...prev, main: "Active", buffer: "Active", peak: "Ready" }));
       
       timerRef.current = setInterval(() => {
         if (dataCounterRef.current < fullCurveRef.current.length) {
-          const point = fullCurveRef.current[dataCounterRef.current];
+          const point = fullCurveRef.current[dataCounterRef.counter || dataCounterRef.current];
           setCurrentData(prev => [...prev, point]);
           setLiveMetrics(prev => ({
             ...prev,
@@ -145,14 +165,14 @@ export default function HorizonDashboard() {
             handleStop(true);
           }
         }
-      }, 50);
+      }, 40); // Faster acquisition for smoother curve
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isRunning]);
 
-  // Demo Logic - FIXED
+  // Demo Logic
   const startDemo = async () => {
     if (isDemoActive || isRunning) return;
     
@@ -181,14 +201,7 @@ export default function HorizonDashboard() {
         await new Promise(r => setTimeout(r, 3000));
       }
       
-      // Check if demo was cancelled
-      const isCancelled = await new Promise(resolve => {
-        setIsDemoActive(current => {
-          resolve(!current);
-          return current;
-        });
-      });
-      if (isCancelled) break;
+      if (!isDemoActive) break;
     }
   };
 
@@ -274,7 +287,6 @@ export default function HorizonDashboard() {
 
   return (
     <div className="flex h-screen w-full bg-[#0f172a] text-slate-200 font-sans overflow-hidden select-none relative">
-      {/* Demo Overlay */}
       <AnimatePresence>
         {isDemoActive && demoMessage && (
           <motion.div 
@@ -616,7 +628,6 @@ export default function HorizonDashboard() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-8">
-                  {/* Hardware Block */}
                   <Card className="bg-[#1e293b] border-slate-700 p-6 space-y-6 shadow-xl">
                     <div className="flex items-center gap-2 text-blue-400">
                       <Cpu size={18} />
@@ -664,7 +675,6 @@ export default function HorizonDashboard() {
                     </div>
                   </Card>
 
-                  {/* Security Block */}
                   <Card className="bg-[#1e293b] border-slate-700 p-6 space-y-6 shadow-xl">
                     <div className="flex items-center gap-2 text-amber-500">
                       <Shield size={18} />
