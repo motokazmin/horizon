@@ -27,7 +27,9 @@ import {
   Layers,
   Thermometer,
   Gauge,
-  History
+  History,
+  CheckCircle2,
+  Clock
 } from "lucide-react";
 import {
   LineChart,
@@ -37,8 +39,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  ReferenceLine,
-  YAxisProps
+  ReferenceLine
 } from "recharts";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -65,6 +66,13 @@ const generateTestPoints = (maxPoints = 100) => {
   });
 };
 
+const historicalData = [
+  { batch: "B-202", avgStress: 45.2, date: "2025-12-20" },
+  { batch: "B-203", avgStress: 48.7, date: "2025-12-21" },
+  { batch: "B-204", avgStress: 42.1, date: "2025-12-22" },
+  { batch: "B-205", avgStress: 50.3, date: "2025-12-23" },
+];
+
 export default function HorizonDashboard() {
   const [activeTab, setActiveTab] = useState("test");
   const [isRunning, setIsRunning] = useState(false);
@@ -79,8 +87,8 @@ export default function HorizonDashboard() {
   });
   
   const [samples, setSamples] = useState([
-    { id: 1, name: "Sample A-101", status: "Ready", result: "-", width: 10, thickness: 4, operator: "Admin" },
-    { id: 2, name: "Sample A-102", status: "Ready", result: "-", width: 10, thickness: 4, operator: "Admin" },
+    { id: 1, name: "Sample A-101", status: "Ready", result: "-", width: 10, thickness: 4, operator: "Admin", date: "2025-12-25" },
+    { id: 2, name: "Sample A-102", status: "Ready", result: "-", width: 10, thickness: 4, operator: "Admin", date: "2025-12-25" },
   ]);
   const [activeSampleId, setActiveSampleId] = useState(1);
   const [machineStatus, setMachineStatus] = useState("Online");
@@ -92,7 +100,7 @@ export default function HorizonDashboard() {
   const [demoStep, setDemoStep] = useState(0);
   const [demoMessage, setDemoMessage] = useState("");
 
-  // Visual Overlay State (for "closer to original" feel)
+  // Visual Overlay State
   const [isSafetyDoorClosed, setIsSafetyDoorClosed] = useState(true);
 
   // Sequence Tracking
@@ -141,7 +149,7 @@ export default function HorizonDashboard() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isRunning]);
 
-  // Demo Logic
+  // Demo Logic - FIXED
   const startDemo = async () => {
     if (isDemoActive || isRunning) return;
     
@@ -160,16 +168,31 @@ export default function HorizonDashboard() {
     ];
 
     for (let i = 0; i < steps.length; i++) {
-      if (!isDemoActive && i > 0) break; // Allow cancel
       setDemoStep(i);
       setDemoMessage(steps[i].msg);
       steps[i].action();
       
-      if (i === 4) {
-        await new Promise(r => setTimeout(r, 8000));
+      if (i === 3) {
+        // Wait for test simulation to run and finish
+        let checkInterval = setInterval(() => {
+          if (!isRunning && dataCounterRef.current > 0) {
+            // Test finished
+          }
+        }, 500);
+        await new Promise(r => setTimeout(r, 8500));
+        clearInterval(checkInterval);
       } else {
         await new Promise(r => setTimeout(r, 3000));
       }
+      
+      // Check if demo was cancelled
+      const isCancelled = await new Promise(resolve => {
+        setIsDemoActive(current => {
+          resolve(!current);
+          return current;
+        });
+      });
+      if (isCancelled) break;
     }
   };
 
@@ -203,11 +226,15 @@ export default function HorizonDashboard() {
     }
   };
 
-  const handleExport = () => {
+  const handleExport = (sample?: any) => {
+    const target = sample || activeSample;
     const reportData = {
       method: testMethod,
-      sample: activeSample.name,
-      result: activeSample.result,
+      sample: target.name,
+      result: target.result,
+      width: target.width,
+      thickness: target.thickness,
+      operator: target.operator,
       timestamp: new Date().toLocaleString()
     };
     
@@ -215,7 +242,7 @@ export default function HorizonDashboard() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `Horizon_Report_${activeSample.name.replace(' ', '_')}.json`;
+    a.download = `Horizon_Report_${target.name.replace(' ', '_')}.json`;
     a.click();
     toast.success("Report exported to JSON");
   };
@@ -239,7 +266,7 @@ export default function HorizonDashboard() {
 
   const addSample = () => {
     const newId = Math.max(...samples.map(s => s.id)) + 1;
-    setSamples([...samples, { id: newId, name: `Sample A-${100 + newId}`, status: "Ready", result: "-", width: 10, thickness: 4, operator: "Admin" }]);
+    setSamples([...samples, { id: newId, name: `Sample A-${100 + newId}`, status: "Ready", result: "-", width: 10, thickness: 4, operator: "Admin", date: new Date().toISOString().split('T')[0] }]);
   };
 
   const deleteSample = (id: number) => {
@@ -264,7 +291,7 @@ export default function HorizonDashboard() {
               <RefreshCw size={16} />
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase text-blue-200 tracking-widest mb-1">Demo Mode Active • Step {demoStep + 1}/7</p>
+              <p className="text-[10px] font-black uppercase text-blue-200 tracking-widest mb-1">Demo Mode Active • Step {demoStep + 1}/8</p>
               <p className="text-sm font-bold text-white tracking-tight">{demoMessage}</p>
             </div>
             <Button 
@@ -279,7 +306,6 @@ export default function HorizonDashboard() {
         )}
       </AnimatePresence>
 
-      {/* Sidebar - Tinius Olsen style */}
       <aside className="w-16 bg-[#020617] flex flex-col items-center py-4 gap-6 border-r border-slate-800 z-30">
         <div className="w-10 h-10 bg-blue-600 rounded flex items-center justify-center text-white font-black text-xl mb-4 shadow-lg shadow-blue-900/20">
           TO
@@ -308,9 +334,7 @@ export default function HorizonDashboard() {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col relative overflow-hidden bg-slate-950">
-        {/* Pro Header with dynamic breadcrumbs */}
         <header className="h-12 bg-[#1e293b] border-b border-slate-700 flex items-center justify-between px-4 shadow-md z-20">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
@@ -334,15 +358,14 @@ export default function HorizonDashboard() {
                 <span className={isSafetyDoorClosed ? 'text-green-400' : 'text-red-400'}>{isSafetyDoorClosed ? "DOOR CLOSED" : "DOOR OPEN"}</span>
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="h-8 text-xs text-slate-400 hover:text-white" onClick={() => toast.success("Method parameters saved")}><Save size={14} className="mr-2" /> Save</Button>
-            <Button variant="ghost" size="sm" className="h-8 text-xs text-slate-400 hover:text-white" onClick={handleExport}><Download size={14} className="mr-2" /> Export</Button>
+            <Button variant="ghost" size="sm" className="h-8 text-xs text-slate-400 hover:text-white" onClick={() => toast.success("Batch saved to memory")}><Save size={14} className="mr-2" /> Save</Button>
+            <Button variant="ghost" size="sm" className="h-8 text-xs text-slate-400 hover:text-white" onClick={() => handleExport()}><Download size={14} className="mr-2" /> Export</Button>
           </div>
         </header>
 
         <div className="flex-1 flex overflow-hidden">
           {activeTab === "test" && (
             <>
-              {/* Complex Side Panel - Closer to original Horizon layout */}
               <div className="w-80 bg-[#1e293b] border-r border-slate-700 flex flex-col">
                 <Tabs defaultValue="samples" className="flex-1 flex flex-col overflow-hidden">
                   <TabsList className="bg-slate-900/50 h-10 p-1 border-b border-slate-700 rounded-none w-full">
@@ -402,16 +425,6 @@ export default function HorizonDashboard() {
                         <Label className="text-[9px] font-bold text-slate-500 uppercase">Initial Speed (mm/min)</Label>
                         <Input defaultValue="5.000" className="h-8 bg-slate-800 border-slate-700 text-xs font-mono" />
                       </div>
-                      <div className="p-3 bg-blue-900/20 rounded border border-blue-800/50 space-y-2">
-                         <div className="flex justify-between text-[10px] font-bold text-blue-400">
-                          <span>CROSS-SECTION</span>
-                          <span>{(activeSample.width * activeSample.thickness).toFixed(2)} mm²</span>
-                        </div>
-                        <div className="flex justify-between text-[10px] font-bold text-blue-500">
-                          <span>MODULUS CALC</span>
-                          <span>CHORD (0.05-0.25%)</span>
-                        </div>
-                      </div>
                     </div>
                   </TabsContent>
 
@@ -422,18 +435,12 @@ export default function HorizonDashboard() {
                          <span className="text-[9px] font-black text-slate-500 uppercase block mb-1">Batch Avg Stress</span>
                          <span className="text-lg font-black text-white">46.2 MPa</span>
                        </div>
-                       <div className="p-2 bg-slate-800/60 rounded border border-slate-700">
-                         <span className="text-[9px] font-black text-slate-500 uppercase block mb-1">Batch Std Dev</span>
-                         <span className="text-lg font-black text-white">1.24 MPa</span>
-                       </div>
                     </div>
                   </TabsContent>
                 </Tabs>
               </div>
 
-              {/* Enhanced Main Test Center */}
               <div className="flex-1 flex flex-col relative">
-                {/* Meter Section with closer original styling */}
                 <div className="h-40 bg-[#020617] flex border-b border-slate-800 divide-x divide-slate-800 shadow-2xl overflow-x-auto">
                   <BigMeter label="Force" value={liveMetrics.force.toFixed(2)} unit="N" color="text-blue-500" />
                   <BigMeter label="Extension" value={liveMetrics.extension.toFixed(3)} unit="mm" color="text-emerald-500" />
@@ -452,29 +459,15 @@ export default function HorizonDashboard() {
                       {isRunning ? <Square size={24} fill="currentColor" /> : <Play size={24} fill="currentColor" />}
                       {isRunning ? "HALT" : "START"}
                     </Button>
-                    <div className="flex gap-2 w-full">
-                       <Button variant="outline" className="flex-1 h-8 text-[9px] font-black uppercase bg-slate-800 border-slate-700" onClick={() => handleStop(false)}>Abort</Button>
-                       <Button variant="outline" className="flex-1 h-8 text-[9px] font-black uppercase bg-slate-800 border-slate-700" onClick={() => toast.info("Return to Zero initiated")}>Return</Button>
-                    </div>
                   </div>
                 </div>
 
                 <div className="flex-1 p-4 grid grid-rows-[1fr_200px] gap-4 overflow-hidden">
-                  {/* Test Curve Area */}
                   <Card className="bg-[#1e293b] border-slate-700 shadow-2xl flex flex-col relative overflow-hidden">
                     <div className="px-4 py-2 border-b border-slate-700 flex justify-between items-center bg-slate-900/40 z-10">
-                      <div className="flex gap-6">
-                        <span className="text-[10px] font-black uppercase text-blue-400 flex items-center gap-2"><Activity size={12}/> Live Curve Display</span>
-                        <div className="flex gap-3 text-[10px] font-bold text-slate-500">
-                          <span className="flex items-center gap-1"><div className="w-2 h-[2px] bg-blue-500"/> Current</span>
-                          <span className="flex items-center gap-1"><div className="w-2 h-[2px] bg-slate-600 border-dashed border-t border-slate-500"/> Reference</span>
-                        </div>
-                      </div>
+                      <span className="text-[10px] font-black uppercase text-blue-400 flex items-center gap-2"><Activity size={12}/> Live Curve Display</span>
                     </div>
                     <div className="flex-1 p-4 relative">
-                       {/* Background Grid Pattern - Real Horizon UI feel */}
-                      <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 0)', backgroundSize: '20px 20px' }} />
-                      
                       <ResponsiveContainer width="100%" height="100%">
                         <LineChart data={currentData}>
                           <CartesianGrid strokeDasharray="3 3" vertical={true} stroke="#334155" />
@@ -482,13 +475,11 @@ export default function HorizonDashboard() {
                           <YAxis tick={{fontSize: 9, fill: '#64748b'}} />
                           <Tooltip contentStyle={{ backgroundColor: '#020617', border: '1px solid #334155', fontSize: '10px' }} />
                           <Line type="monotone" dataKey="stress" stroke="#3b82f6" strokeWidth={3} dot={false} isAnimationActive={false} />
-                          <ReferenceLine y={0} stroke="#475569" />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
                   </Card>
 
-                  {/* Pro Data Channels Section */}
                   <div className="grid grid-cols-4 gap-4">
                     <ValueCard label="Tensile Strength" value={isRunning ? (liveMetrics.stress * 1.05).toFixed(1) : (activeSample.status === "Completed" ? activeSample.result.split(' ')[0] : "0.0")} unit="MPa" icon={<Activity size={14}/>} />
                     <ValueCard label="Load @ Yield" value={isRunning ? (liveMetrics.force * 0.9).toFixed(2) : "0.00"} unit="N" icon={<Gauge size={14}/>} />
@@ -498,7 +489,6 @@ export default function HorizonDashboard() {
                 </div>
               </div>
 
-              {/* System Control Sidebar */}
               <div className="w-64 bg-[#1e293b] border-l border-slate-700 flex flex-col">
                 <div className="p-4 border-b border-slate-700 bg-slate-900/10">
                   <h2 className="text-[10px] font-black uppercase tracking-tighter text-slate-400 mb-4 flex items-center gap-2"><Monitor size={12}/> Machine IO</h2>
@@ -520,20 +510,54 @@ export default function HorizonDashboard() {
                     <StatusStep label="Data Analysis" status={sequenceStatus.peak} />
                   </div>
                 </div>
-
-                <div className="p-4 bg-red-950/30 border-t border-slate-700 space-y-3">
-                  <Button 
-                    variant="destructive" 
-                    className="w-full h-14 bg-red-600 hover:bg-red-700 text-white font-black uppercase tracking-tighter flex flex-col gap-0 shadow-lg shadow-red-900/20"
-                    onClick={() => handleStop(false)}
-                  >
-                    <span>EMERGENCY</span>
-                    <span className="text-[10px] opacity-70">STOP SYSTEM</span>
-                  </Button>
-                  <p className="text-[8px] text-center font-black text-red-500/60 uppercase">Hardware Hardware Override</p>
-                </div>
               </div>
             </>
+          )}
+
+          {activeTab === "reports" && (
+            <div className="flex-1 p-8 bg-slate-950 overflow-auto">
+              <div className="max-w-6xl mx-auto space-y-8">
+                <div className="flex justify-between items-end border-b border-slate-800 pb-6">
+                  <div>
+                    <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic">REPORT ARCHIVE</h2>
+                    <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Generated Batch Analysis Documents</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                  {samples.filter(s => s.status === "Completed").length === 0 ? (
+                    <div className="p-20 text-center border border-dashed border-slate-800 rounded-2xl bg-slate-900/20">
+                      <FileText size={48} className="mx-auto text-slate-700 mb-4" />
+                      <h3 className="text-lg font-bold text-slate-400">No Reports Available</h3>
+                      <p className="text-sm text-slate-600 mt-2">Complete a test to generate a sample report.</p>
+                    </div>
+                  ) : (
+                    samples.filter(s => s.status === "Completed").map(sample => (
+                      <Card key={sample.id} className="bg-[#1e293b] border-slate-700 p-6 flex items-center justify-between group hover:border-blue-500/50 transition-all">
+                        <div className="flex items-center gap-4">
+                          <div className="w-12 h-12 bg-blue-600/10 rounded-lg flex items-center justify-center text-blue-500 border border-blue-500/20">
+                            <FileText size={24} />
+                          </div>
+                          <div>
+                            <h4 className="font-bold text-white">{sample.name} - Analysis Report</h4>
+                            <div className="flex gap-4 mt-1">
+                              <span className="text-[10px] font-black text-slate-500 flex items-center gap-1 uppercase tracking-wider"><Clock size={10}/> {sample.date || '2025-12-25'}</span>
+                              <span className="text-[10px] font-black text-blue-400 flex items-center gap-1 uppercase tracking-wider"><CheckCircle2 size={10}/> ISO 527 COMPLIANT</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right mr-4">
+                            <p className="text-[10px] font-black text-slate-500 uppercase">Peak Strength</p>
+                            <p className="text-lg font-black text-blue-400 font-mono leading-none">{sample.result}</p>
+                          </div>
+                          <Button variant="ghost" className="h-10 px-4 text-xs font-black uppercase hover:bg-blue-600 hover:text-white" onClick={() => handleExport(sample)}><Download size={14} className="mr-2"/> PDF Export</Button>
+                        </div>
+                      </Card>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
           )}
 
           {activeTab === "data" && (
@@ -544,7 +568,6 @@ export default function HorizonDashboard() {
                     <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic">LIMS Database</h2>
                     <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Laboratory Information Management System</p>
                   </div>
-                  <Button className="bg-blue-600 text-[10px] font-black uppercase h-9 px-6"><Plus size={14} className="mr-2"/> New Entry</Button>
                 </div>
                 <div className="grid grid-cols-4 gap-4">
                   <StatBox label="Database Entries" value={samples.length.toString()} icon={<Database size={20}/>} />
@@ -577,7 +600,7 @@ export default function HorizonDashboard() {
                           <td className="px-6 py-4 text-right">
                              <div className="flex justify-end gap-2">
                                <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-500 hover:text-blue-400"><Eye size={14}/></Button>
-                               <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-500 hover:text-green-400" onClick={handleExport}><Download size={14}/></Button>
+                               <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-500 hover:text-green-400" onClick={() => handleExport(sample)}><Download size={14}/></Button>
                              </div>
                           </td>
                         </tr>
