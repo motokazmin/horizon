@@ -29,7 +29,10 @@ import {
   Gauge,
   History,
   CheckCircle2,
-  Clock
+  Clock,
+  Shield,
+  Cpu,
+  Radio
 } from "lucide-react";
 import {
   LineChart,
@@ -92,7 +95,7 @@ export default function HorizonDashboard() {
   ]);
   const [activeSampleId, setActiveSampleId] = useState(1);
   const [machineStatus, setMachineStatus] = useState("Online");
-  const [loadCell] = useState("STDM-100kN");
+  const [loadCell, setLoadCell] = useState("STDM-100kN");
   const [testMethod] = useState("Tensile ISO 527-2");
   
   // Demo State
@@ -173,14 +176,7 @@ export default function HorizonDashboard() {
       steps[i].action();
       
       if (i === 3) {
-        // Wait for test simulation to run and finish
-        let checkInterval = setInterval(() => {
-          if (!isRunning && dataCounterRef.current > 0) {
-            // Test finished
-          }
-        }, 500);
         await new Promise(r => setTimeout(r, 8500));
-        clearInterval(checkInterval);
       } else {
         await new Promise(r => setTimeout(r, 3000));
       }
@@ -421,10 +417,6 @@ export default function HorizonDashboard() {
                           <Input value={activeSample.thickness} onChange={(e) => updateSampleParam(activeSampleId, 'thickness', e.target.value)} className="h-8 bg-slate-800 border-slate-700 text-xs font-mono" />
                         </div>
                       </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-[9px] font-bold text-slate-500 uppercase">Initial Speed (mm/min)</Label>
-                        <Input defaultValue="5.000" className="h-8 bg-slate-800 border-slate-700 text-xs font-mono" />
-                      </div>
                     </div>
                   </TabsContent>
 
@@ -608,6 +600,118 @@ export default function HorizonDashboard() {
                     </tbody>
                   </table>
                 </Card>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "settings" && (
+            <div className="flex-1 p-8 bg-slate-950 overflow-auto">
+              <div className="max-w-5xl mx-auto space-y-10">
+                <div className="border-b border-slate-800 pb-6">
+                  <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic flex items-center gap-3">
+                    <Settings size={32} className="text-blue-500" />
+                    System Configuration
+                  </h2>
+                  <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest mt-1">Hardware and Method Administration</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-8">
+                  {/* Hardware Block */}
+                  <Card className="bg-[#1e293b] border-slate-700 p-6 space-y-6 shadow-xl">
+                    <div className="flex items-center gap-2 text-blue-400">
+                      <Cpu size={18} />
+                      <h3 className="text-xs font-black uppercase tracking-widest">Hardware Registry</h3>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black text-slate-500 uppercase">Load Cell Interface</Label>
+                        <select 
+                          className="w-full h-10 bg-slate-900 border-slate-700 rounded-md px-3 text-xs font-bold text-slate-300 outline-none focus:ring-2 ring-blue-500"
+                          value={loadCell}
+                          onChange={(e) => setLoadCell(e.target.value)}
+                        >
+                          <option>STDM-100kN (S/N 8821)</option>
+                          <option>STDM-50kN (S/N 4412)</option>
+                          <option>STDM-10kN (S/N 2102)</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black text-slate-500 uppercase">Frame Status</Label>
+                        <select 
+                          className="w-full h-10 bg-slate-900 border-slate-700 rounded-md px-3 text-xs font-bold text-slate-300 outline-none focus:ring-2 ring-blue-500"
+                          value={machineStatus}
+                          onChange={(e) => setMachineStatus(e.target.value)}
+                        >
+                          <option>Online</option>
+                          <option>Offline</option>
+                          <option>Simulation Mode</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-800 space-y-3">
+                      <div className="flex justify-between items-center text-[10px] font-bold">
+                        <span className="text-slate-500 uppercase">Firmware</span>
+                        <span className="text-slate-300">v4.8.2-PRO</span>
+                      </div>
+                      <div className="flex justify-between items-center text-[10px] font-bold">
+                        <span className="text-slate-500 uppercase">Comm Link</span>
+                        <span className="text-green-500">ETHERNET/IP</span>
+                      </div>
+                      <Button variant="outline" className="w-full h-8 text-[10px] font-black border-slate-700 uppercase">Sync Hardware</Button>
+                    </div>
+                  </Card>
+
+                  {/* Security Block */}
+                  <Card className="bg-[#1e293b] border-slate-700 p-6 space-y-6 shadow-xl">
+                    <div className="flex items-center gap-2 text-amber-500">
+                      <Shield size={18} />
+                      <h3 className="text-xs font-black uppercase tracking-widest">Security & Interlocks</h3>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between p-4 bg-slate-900/30 border border-slate-800 rounded-xl">
+                        <div className="flex items-center gap-3">
+                          <Lock size={20} className={isSafetyDoorClosed ? "text-green-500" : "text-red-500"} />
+                          <div>
+                            <p className="text-xs font-black text-white uppercase tracking-tight">Safety Door Sensor</p>
+                            <p className="text-[9px] font-bold text-slate-500">{isSafetyDoorClosed ? "Active & Locked" : "Warning: Interlock Bypassed"}</p>
+                          </div>
+                        </div>
+                        <Button 
+                          variant={isSafetyDoorClosed ? "outline" : "destructive"} 
+                          size="sm" 
+                          className="h-8 text-[9px] font-black uppercase"
+                          onClick={() => setIsSafetyDoorClosed(!isSafetyDoorClosed)}
+                        >
+                          {isSafetyDoorClosed ? "Open Door" : "Close Door"}
+                        </Button>
+                      </div>
+
+                      <div className="flex items-center justify-between p-4 bg-slate-900/30 border border-slate-800 rounded-xl opacity-50">
+                        <div className="flex items-center gap-3">
+                          <Radio size={20} className="text-blue-500" />
+                          <div>
+                            <p className="text-xs font-black text-white uppercase tracking-tight">Remote LIMS Sync</p>
+                            <p className="text-[9px] font-bold text-slate-500">Cloud Data Mirroring</p>
+                          </div>
+                        </div>
+                        <div className="text-[8px] font-black text-slate-600 border border-slate-700 px-2 py-1 rounded">DISABLED</div>
+                      </div>
+                    </div>
+
+                    <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle size={14} className="text-amber-500 mt-0.5" />
+                        <p className="text-[10px] font-bold text-amber-200 leading-tight uppercase tracking-tight">
+                          Calibration expires in 172 days. Schedule professional verification to maintain ISO compliance.
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
               </div>
             </div>
           )}
