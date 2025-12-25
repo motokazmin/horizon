@@ -14,21 +14,13 @@ import {
   Database, 
   TrendingUp,
   Monitor,
-  HardDrive,
   Plus,
   Trash2,
-  Copy,
   ChevronDown,
-  Info,
-  History,
-  AlertTriangle,
-  Save,
-  Download,
-  Search,
-  Users,
-  BarChart3,
   RefreshCw,
-  Maximize2
+  Maximize2,
+  Save,
+  Download
 } from "lucide-react";
 import {
   LineChart,
@@ -38,9 +30,6 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
-  AreaChart,
-  Area,
   ReferenceLine
 } from "recharts";
 import { toast } from "sonner";
@@ -49,16 +38,14 @@ import { toast } from "sonner";
 const generateTestPoints = (maxPoints = 100) => {
   return Array.from({ length: maxPoints }, (_, i) => {
     const strain = i * 0.2;
-    // Simple elastic-plastic model: stress = E * strain until yield, then hardening
     let stress = 0;
-    const E = 1500; // Modulus
+    const E = 1500; 
     const yieldStrain = 2;
     if (strain < yieldStrain) {
       stress = E * strain;
     } else {
       stress = E * yieldStrain + 200 * Math.pow(strain - yieldStrain, 0.5);
     }
-    // Add noise
     stress += (Math.random() - 0.5) * 20;
     return {
       extension: strain.toFixed(2),
@@ -93,12 +80,21 @@ export default function HorizonDashboard() {
   ]);
   const [activeSampleId, setActiveSampleId] = useState(1);
   const [machineStatus, setMachineStatus] = useState("Online");
-  const [loadCell, setLoadCell] = useState("STDM-100kN");
-  const [testMethod, setTestMethod] = useState("Tensile ISO 527-2");
+  const [loadCell] = useState("STDM-100kN");
+  const [testMethod] = useState("Tensile ISO 527-2");
   
+  // Sequence Tracking
+  const [sequenceStatus, setSequenceStatus] = useState({
+    grip: "Done",
+    slack: "Done",
+    main: "Ready",
+    buffer: "Ready",
+    peak: "Ready"
+  });
+
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const dataCounterRef = useRef(0);
-  const fullCurveRef = useRef(generateTestPoints(200));
+  const fullCurveRef = useRef(generateTestPoints(150));
 
   const activeSample = samples.find(s => s.id === activeSampleId) || samples[0];
 
@@ -107,6 +103,7 @@ export default function HorizonDashboard() {
       dataCounterRef.current = 0;
       setCurrentData([]);
       fullCurveRef.current = generateTestPoints(150);
+      setSequenceStatus(prev => ({ ...prev, main: "Active", buffer: "Active", peak: "Ready" }));
       
       timerRef.current = setInterval(() => {
         if (dataCounterRef.current < fullCurveRef.current.length) {
@@ -120,7 +117,6 @@ export default function HorizonDashboard() {
           });
           dataCounterRef.current++;
           
-          // Auto-stop at break point (simulated end of array)
           if (dataCounterRef.current === fullCurveRef.current.length) {
             handleStop(true);
           }
@@ -133,8 +129,9 @@ export default function HorizonDashboard() {
   }, [isRunning]);
 
   const handleStart = () => {
-    if (activeSample.status === "Completed") {
-      toast.info("Overwriting previous results for this sample");
+    if (machineStatus !== "Online") {
+      toast.error("Machine must be ONLINE to start test");
+      return;
     }
     setIsRunning(true);
     toast.success(`Starting ${testMethod} on ${activeSample.name}`);
@@ -149,10 +146,43 @@ export default function HorizonDashboard() {
       setSamples(prev => prev.map(s => 
         s.id === activeSampleId ? { ...s, status: "Completed", result: peakStress.toFixed(2) + " MPa" } : s
       ));
-      toast.success("Test completed successfully");
+      setSequenceStatus(prev => ({ ...prev, main: "Done", buffer: "Done", peak: "Done" }));
+      toast.success("Test completed and results recorded");
     } else {
+      setSequenceStatus(prev => ({ ...prev, main: "Ready", buffer: "Ready", peak: "Ready" }));
       toast.error("Test aborted");
     }
+  };
+
+  const handleExport = () => {
+    const reportData = {
+      method: testMethod,
+      sample: activeSample.name,
+      result: activeSample.result,
+      timestamp: new Date().toLocaleString()
+    };
+    
+    // Simulate file generation
+    const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Horizon_Report_${activeSample.name.replace(' ', '_')}.json`;
+    a.click();
+    toast.success("Report exported to JSON");
+  };
+
+  const handleJog = (dir: string) => {
+    if (isRunning) {
+      toast.warning("Cannot JOG while test is running");
+      return;
+    }
+    const val = dir === 'up' ? 0.05 : -0.05;
+    setLiveMetrics(prev => ({
+      ...prev,
+      extension: parseFloat((prev.extension + val).toFixed(3))
+    }));
+    toast.info(`Jogging ${dir.toUpperCase()}`);
   };
 
   const updateSampleParam = (id: number, field: string, value: string) => {
@@ -173,7 +203,6 @@ export default function HorizonDashboard() {
 
   return (
     <div className="flex h-screen w-full bg-[#0f172a] text-slate-200 font-sans overflow-hidden select-none">
-      {/* Sidebar - Tinius Olsen style */}
       <aside className="w-16 bg-[#020617] flex flex-col items-center py-4 gap-6 border-r border-slate-800 z-30">
         <div className="w-10 h-10 bg-blue-600 rounded flex items-center justify-center text-white font-black text-xl mb-4 shadow-lg shadow-blue-900/20">
           TO
@@ -187,9 +216,7 @@ export default function HorizonDashboard() {
         </div>
       </aside>
 
-      {/* Main Content */}
       <main className="flex-1 flex flex-col relative overflow-hidden bg-slate-950">
-        {/* Pro Header */}
         <header className="h-12 bg-[#1e293b] border-b border-slate-700 flex items-center justify-between px-4 shadow-md z-20">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
@@ -210,15 +237,14 @@ export default function HorizonDashboard() {
                 <span className={machineStatus === 'Online' ? 'text-green-400' : 'text-red-400'}>{machineStatus.toUpperCase()}</span>
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="h-8 text-xs text-slate-400 hover:text-white"><Save size={14} className="mr-2" /> Save</Button>
-            <Button variant="ghost" size="sm" className="h-8 text-xs text-slate-400 hover:text-white"><Download size={14} className="mr-2" /> Export</Button>
+            <Button variant="ghost" size="sm" className="h-8 text-xs text-slate-400 hover:text-white" onClick={() => toast.success("Batch saved to memory")}><Save size={14} className="mr-2" /> Save</Button>
+            <Button variant="ghost" size="sm" className="h-8 text-xs text-slate-400 hover:text-white" onClick={handleExport}><Download size={14} className="mr-2" /> Export</Button>
           </div>
         </header>
 
         <div className="flex-1 flex overflow-hidden">
           {activeTab === "test" && (
             <>
-              {/* Batch Sidebar */}
               <div className="w-72 bg-[#1e293b] border-r border-slate-700 flex flex-col">
                 <div className="p-3 border-b border-slate-700 flex items-center justify-between bg-slate-900/30">
                   <h2 className="text-[10px] font-black uppercase tracking-tighter text-slate-400">Current Batch</h2>
@@ -285,14 +311,12 @@ export default function HorizonDashboard() {
                 </div>
               </div>
 
-              {/* Main Test Interface */}
               <div className="flex-1 flex flex-col relative">
-                {/* Big Live Meters */}
                 <div className="h-32 bg-[#020617] flex border-b border-slate-800 divide-x divide-slate-800 shadow-xl">
-                  <BigMeter label="Force" value={liveMetrics.force.toFixed(2)} unit="N" color="text-blue-500" glow="shadow-blue-500/10" />
-                  <BigMeter label="Extension" value={liveMetrics.extension.toFixed(3)} unit="mm" color="text-emerald-500" glow="shadow-emerald-500/10" />
-                  <BigMeter label="Stress" value={liveMetrics.stress.toFixed(2)} unit="MPa" color="text-amber-500" glow="shadow-amber-500/10" />
-                  <BigMeter label="Strain" value={liveMetrics.strain.toFixed(2)} unit="%" color="text-purple-500" glow="shadow-purple-500/10" />
+                  <BigMeter label="Force" value={liveMetrics.force.toFixed(2)} unit="N" color="text-blue-500" />
+                  <BigMeter label="Extension" value={liveMetrics.extension.toFixed(3)} unit="mm" color="text-emerald-500" />
+                  <BigMeter label="Stress" value={liveMetrics.stress.toFixed(2)} unit="MPa" color="text-amber-500" />
+                  <BigMeter label="Strain" value={liveMetrics.strain.toFixed(2)} unit="%" color="text-purple-500" />
                   
                   <div className="flex-1 flex items-center justify-center p-4 bg-slate-900/20">
                     <Button 
@@ -310,7 +334,6 @@ export default function HorizonDashboard() {
                 </div>
 
                 <div className="flex-1 p-4 grid grid-rows-[1fr_180px] gap-4">
-                  {/* Test Curve */}
                   <Card className="bg-[#1e293b] border-slate-700 shadow-2xl flex flex-col relative overflow-hidden group">
                     <div className="px-4 py-2 border-b border-slate-700 flex justify-between items-center bg-slate-900/40">
                       <div className="flex gap-4">
@@ -346,13 +369,11 @@ export default function HorizonDashboard() {
                             strokeWidth={3} 
                             dot={false} 
                             isAnimationActive={false} 
-                            shadow="0 0 10px #3b82f6"
                           />
                           <ReferenceLine y={0} stroke="#475569" />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
-                    {/* Floating status */}
                     {isRunning && (
                       <div className="absolute top-12 right-6 bg-blue-600 px-3 py-1 rounded-full text-[10px] font-black animate-pulse flex items-center gap-2">
                         <div className="w-1.5 h-1.5 bg-white rounded-full" />
@@ -361,36 +382,34 @@ export default function HorizonDashboard() {
                     )}
                   </Card>
 
-                  {/* Pro Results Grid */}
                   <div className="grid grid-cols-4 gap-4">
-                    <ValueCard label="Yield Stress" value={isRunning ? (liveMetrics.stress * 0.85).toFixed(1) : "38.4"} unit="MPa" />
-                    <ValueCard label="Peak Load" value={isRunning ? (liveMetrics.force).toFixed(2) : "485.2"} unit="N" />
+                    <ValueCard label="Yield Stress" value={isRunning ? (liveMetrics.stress * 0.85).toFixed(1) : (activeSample.status === "Completed" ? activeSample.result.split(' ')[0] : "0.0")} unit="MPa" />
+                    <ValueCard label="Peak Load" value={isRunning ? (liveMetrics.force).toFixed(2) : "0.00"} unit="N" />
                     <ValueCard label="Young's Modulus" value="1.42" unit="GPa" trend="+0.05" />
                     <ValueCard label="Energy to Break" value="12.4" unit="J" color="text-emerald-400" />
                   </div>
                 </div>
               </div>
 
-              {/* Hardware Sidebar */}
               <div className="w-64 bg-[#1e293b] border-l border-slate-700 flex flex-col">
                 <div className="p-4 border-b border-slate-700">
                   <h2 className="text-[10px] font-black uppercase tracking-tighter text-slate-400 mb-4">Manual Controls</h2>
                   <div className="grid grid-cols-2 gap-2">
-                    <HardwareBtn icon={<ChevronDown size={16} />} label="Jog Down" onClick={() => toast.info("Manual Jog: Down")} />
-                    <HardwareBtn icon={<ChevronDown className="rotate-180" size={16} />} label="Jog Up" onClick={() => toast.info("Manual Jog: Up")} />
-                    <HardwareBtn icon={<Monitor size={16} />} label="Zero Load" onClick={() => { setLiveMetrics(m => ({...m, force: 0})); toast.success("Load Cell Zeroed"); }} />
-                    <HardwareBtn icon={<Monitor size={16} />} label="Zero Ext" onClick={() => { setLiveMetrics(m => ({...m, extension: 0})); toast.success("Extension Zeroed"); }} />
+                    <HardwareBtn icon={<ChevronDown size={16} />} label="Jog Down" onClick={() => handleJog('down')} />
+                    <HardwareBtn icon={<ChevronDown className="rotate-180" size={16} />} label="Jog Up" onClick={() => handleJog('up')} />
+                    <HardwareBtn icon={<Monitor size={16} />} label="Zero Load" onClick={() => { setLiveMetrics(m => ({...m, force: 0, stress: 0})); toast.success("Load Cell Zeroed"); }} />
+                    <HardwareBtn icon={<Monitor size={16} />} label="Zero Ext" onClick={() => { setLiveMetrics(m => ({...m, extension: 0, strain: 0})); toast.success("Extension Zeroed"); }} />
                   </div>
                 </div>
                 
                 <div className="p-4 flex-1 space-y-4">
                   <h2 className="text-[10px] font-black uppercase tracking-tighter text-slate-400">Internal Sequence</h2>
                   <div className="space-y-3">
-                    <StatusStep label="Grip Engagement" done />
-                    <StatusStep label="Slack Removal" done />
-                    <StatusStep label="Main Test Path" active={isRunning} />
-                    <StatusStep label="Data Buffering" active={isRunning} />
-                    <StatusStep label="Peak Detection" />
+                    <StatusStep label="Grip Engagement" status={sequenceStatus.grip} />
+                    <StatusStep label="Slack Removal" status={sequenceStatus.slack} />
+                    <StatusStep label="Main Test Path" status={sequenceStatus.main} active={isRunning} />
+                    <StatusStep label="Data Buffering" status={sequenceStatus.buffer} active={isRunning} />
+                    <StatusStep label="Peak Detection" status={sequenceStatus.peak} />
                   </div>
                 </div>
 
@@ -411,38 +430,38 @@ export default function HorizonDashboard() {
           {activeTab === "data" && (
             <div className="flex-1 p-8 bg-slate-950 overflow-auto">
               <div className="max-w-6xl mx-auto space-y-8">
-                <div className="flex justify-between items-end">
-                  <div>
-                    <h2 className="text-3xl font-black text-white tracking-tighter">BATCH ANALYSIS</h2>
-                    <p className="text-slate-500 font-medium">LIMS Integrated Database Results</p>
-                  </div>
+                <div>
+                  <h2 className="text-3xl font-black text-white tracking-tighter">BATCH ANALYSIS</h2>
+                  <p className="text-slate-500 font-medium">LIMS Integrated Database Results</p>
                 </div>
-
                 <div className="grid grid-cols-4 gap-4">
-                  <StatBox label="Tests Run" value="1,248" />
+                  <StatBox label="Tests Run" value={samples.filter(s => s.status === "Completed").length.toString()} />
                   <StatBox label="Pass Rate" value="98.2%" color="text-green-400" />
-                  <StatBox label="Mean Stress" value="46.5" unit="MPa" />
-                  <StatBox label="Std Dev" value="1.24" />
+                  <StatBox label="Active Samples" value={samples.length.toString()} />
+                  <StatBox label="Machine Time" value="14.2h" />
                 </div>
-
                 <Card className="bg-[#1e293b] border-slate-700 overflow-hidden">
                   <table className="w-full text-left">
                     <thead className="bg-slate-900/50 text-[10px] font-black uppercase text-slate-500 border-b border-slate-700">
                       <tr>
-                        <th className="px-6 py-4">Batch ID</th>
-                        <th className="px-6 py-4">Mean Strength</th>
-                        <th className="px-6 py-4">Timestamp</th>
-                        <th className="px-6 py-4 text-right">Records</th>
+                        <th className="px-6 py-4">Sample ID</th>
+                        <th className="px-6 py-4">Strength</th>
+                        <th className="px-6 py-4">Status</th>
+                        <th className="px-6 py-4 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800">
-                      {historicalData.map(item => (
-                        <tr key={item.batch} className="hover:bg-blue-600/5 transition-colors cursor-pointer group">
-                          <td className="px-6 py-4 text-xs font-bold text-slate-300">{item.batch}</td>
-                          <td className="px-6 py-4 text-xs font-mono text-blue-400">{item.avgStress} MPa</td>
-                          <td className="px-6 py-4 text-[10px] font-bold text-slate-500">{item.date}</td>
+                      {samples.map(sample => (
+                        <tr key={sample.id} className="hover:bg-blue-600/5 transition-colors">
+                          <td className="px-6 py-4 text-xs font-bold text-slate-300">{sample.name}</td>
+                          <td className="px-6 py-4 text-xs font-mono text-blue-400">{sample.result}</td>
+                          <td className="px-6 py-4">
+                             <span className={`text-[8px] px-1.5 py-0.5 rounded-full font-black uppercase ${
+                              sample.status === 'Completed' ? 'bg-green-500/20 text-green-400' : 'bg-slate-700 text-slate-400'
+                            }`}>{sample.status}</span>
+                          </td>
                           <td className="px-6 py-4 text-right">
-                            <Button variant="ghost" size="sm" className="h-7 text-[10px] font-black text-blue-500 group-hover:bg-blue-600 group-hover:text-white">RECALL</Button>
+                             <Button variant="ghost" size="sm" className="h-7 text-[10px] font-black text-blue-500" onClick={handleExport}>RECALL</Button>
                           </td>
                         </tr>
                       ))}
@@ -468,30 +487,9 @@ export default function HorizonDashboard() {
                           onChange={(e) => setMachineStatus(e.target.value)}
                         >
                           <option>Online</option>
-                          <option>Calibration Mode</option>
-                          <option>Service Required</option>
+                          <option>Offline</option>
+                          <option>Maintenance</option>
                         </select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black text-slate-500 uppercase">Load Cell Registry</Label>
-                        <select 
-                          className="w-full h-10 bg-slate-900 border-slate-700 rounded-md px-3 text-xs font-bold text-slate-300 outline-none focus:ring-2 ring-blue-500"
-                          value={loadCell}
-                          onChange={(e) => setLoadCell(e.target.value)}
-                        >
-                          <option>STDM-100kN (#8821)</option>
-                          <option>STDM-50kN (#4412)</option>
-                          <option>STDM-1kN (#2102)</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="p-6 bg-slate-900/50 rounded-xl border border-slate-800 space-y-4">
-                      <h3 className="text-xs font-black text-blue-500 uppercase">CALIBRATION DATA</h3>
-                      <div className="space-y-3">
-                        <div className="flex justify-between text-[10px] font-bold"><span className="text-slate-500">LAST SYNC</span><span className="text-slate-300">2025-11-12</span></div>
-                        <div className="flex justify-between text-[10px] font-bold"><span className="text-slate-500">COMPLIANCE</span><span className="text-green-400">ISO 7500-1</span></div>
-                        <div className="h-[1px] bg-slate-800" />
-                        <Button variant="outline" className="w-full h-8 text-[10px] font-black border-slate-700">RUN DIAGNOSTICS</Button>
                       </div>
                     </div>
                   </div>
@@ -521,9 +519,9 @@ function NavItem({ icon, active, onClick, label }: { icon: React.ReactNode; acti
   );
 }
 
-function BigMeter({ label, value, unit, color, glow }: { label: string; value: string; unit: string; color: string; glow: string }) {
+function BigMeter({ label, value, unit, color }: { label: string; value: string; unit: string; color: string }) {
   return (
-    <div className={`flex flex-col justify-center px-8 border-r border-slate-800 transition-colors ${glow}`}>
+    <div className="flex flex-col justify-center px-8 border-r border-slate-800 transition-colors">
       <span className="text-[9px] font-black text-slate-500 uppercase mb-1 tracking-tighter">{label}</span>
       <div className="flex items-baseline gap-2">
         <span className={`text-4xl font-mono font-black tabular-nums ${color}`}>{value}</span>
@@ -561,19 +559,26 @@ function HardwareBtn({ icon, label, onClick }: { icon: React.ReactNode; label: s
   );
 }
 
-function StatusStep({ label, done, active }: { label: string; done?: boolean; active?: boolean }) {
+function StatusStep({ label, status, active }: { label: string; status: string; active?: boolean }) {
+  const getStatusColor = () => {
+    if (status === "Done") return "bg-green-500 border-green-400";
+    if (status === "Active" || active) return "bg-blue-500 border-blue-400 animate-pulse ring-2 ring-blue-500/20";
+    return "bg-slate-800 border-slate-700";
+  };
+
+  const getTextColor = () => {
+    if (status === "Done") return "text-slate-400";
+    if (status === "Active" || active) return "text-blue-400";
+    return "text-slate-600";
+  };
+
   return (
     <div className="flex items-center gap-3 group">
-      <div className={`w-2 h-2 rounded-full border ${
-        done ? 'bg-green-500 border-green-400' : 
-        active ? 'bg-blue-500 border-blue-400 animate-pulse ring-2 ring-blue-500/20' : 
-        'bg-slate-800 border-slate-700 group-hover:border-slate-500'
-      }`} />
-      <span className={`text-[10px] font-bold uppercase tracking-tight ${
-        done ? 'text-slate-400' : 
-        active ? 'text-blue-400' : 
-        'text-slate-600'
-      }`}>{label}</span>
+      <div className={`w-2 h-2 rounded-full border ${getStatusColor()}`} />
+      <div className="flex flex-col">
+        <span className={`text-[10px] font-bold uppercase tracking-tight ${getTextColor()}`}>{label}</span>
+        <span className="text-[7px] font-black text-slate-500">{status}</span>
+      </div>
     </div>
   );
 }
