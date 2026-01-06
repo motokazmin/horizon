@@ -1,0 +1,100 @@
+HorizonUTM_MVP/
+│
+├── CMakeLists.txt                          # Main build configuration
+├── README.md                               # Project overview
+├── BUILD_INSTRUCTIONS.md                   # How to build the project
+├── .gitignore                              # Git ignore rules
+│
+├── docs/                                   # Documentation
+│   ├── architecture.md                     # Architecture overview
+│   ├── mvp_scope.md                        # MVP feature scope
+│   └── phase2_plan.md                      # Future development plan
+│
+├── resources/                              # Application resources
+│   ├── database/
+│   │   └── schema.sql                      # SQLite database schema
+│   ├── styles/
+│   │   └── dark_theme.qss                  # Qt stylesheet (dark theme)
+│   └── icons/                              # (Empty - icons to be added)
+│
+├── src/                                    # Source code
+│   ├── main.cpp                            # Application entry point
+│   │
+│   ├── core/                               # Core utilities
+│   │   ├── Constants.h                     # Application constants
+│   │   ├── Logger.h/.cpp                   # Logging system
+│   │   └── Config.h/.cpp                   # Configuration manager
+│   │
+│   ├── domain/                             # DOMAIN LAYER (Business Logic)
+│   │   ├── entities/                       # Business entities
+│   │   │   ├── Test.h/.cpp                 # Test entity
+│   │   │   ├── Sample.h/.cpp               # Sample entity
+│   │   │   └── TestMethod.h/.cpp           # Test method entity
+│   │   │
+│   │   ├── value_objects/                  # Immutable value objects
+│   │   │   ├── SensorData.h                # ✅ Sensor reading data
+│   │   │   ├── MachineState.h              # ✅ Machine state enum
+│   │   │   └── TestResult.h                # ✅ Test results
+│   │   │
+│   │   ├── services/                       # Domain services
+│   │   │   ├── StressStrainCalculator.h/.cpp    # Calculations
+│   │   │   └── TestMethodValidator.h/.cpp       # Validation
+│   │   │
+│   │   └── interfaces/                     # Contracts (DIP)
+│   │       ├── IUTMDriver.h                # ✅ Hardware interface
+│   │       ├── ITestRepository.h           # ✅ Data access interface
+│   │       └── IExportService.h            # ✅ Export interface
+│   │
+│   ├── infrastructure/                     # INFRASTRUCTURE LAYER
+│   │   ├── hardware/                       # Hardware drivers
+│   │   │   └── MockUTMDriver.h/.cpp        # Mock hardware (MVP)
+│   │   │
+│   │   ├── persistence/                    # Database
+│   │   │   ├── DatabaseManager.h/.cpp      # DB connection manager
+│   │   │   └── SQLiteTestRepository.h/.cpp # SQLite implementation
+│   │   │
+│   │   └── export/                         # Export services
+│   │       └── CSVExportService.h/.cpp     # CSV export (MVP)
+│   │
+│   ├── application/                        # APPLICATION LAYER
+│   │   ├── controllers/                    # Use case controllers
+│   │   │   ├── TestController.h/.cpp       # Test orchestration
+│   │   │   ├── HardwareController.h/.cpp   # Hardware management
+│   │   │   └── DataExportController.h/.cpp # Export orchestration
+│   │   │
+│   │   └── dto/                            # Data transfer objects
+│   │       ├── TestParametersDTO.h         # Test parameters
+│   │       └── TestResultDTO.h             # Test results
+│   │
+│   └── presentation/                       # PRESENTATION LAYER (UI)
+│       ├── MainWindow.h/.cpp               # Main application window
+│       │
+│       ├── views/                          # View components
+│       │   ├── DashboardView.h/.cpp        # Main dashboard
+│       │   ├── SampleQueueView.h/.cpp      # Sample queue
+│       │   └── SettingsDialog.h/.cpp       # Settings dialog
+│       │
+│       └── widgets/                        # Custom widgets
+│           ├── MetricWidget.h/.cpp         # Metric display widget
+│           ├── RealtimeChartWidget.h/.cpp  # Live chart widget
+│           └── StatusIndicator.h/.cpp      # Status indicator
+│
+└── tests/                                  # Unit tests
+    └── CMakeLists.txt                      # Test build config
+
+LEGEND:
+✅ = Fully implemented (Phase 1)
+(Empty stub) = To be implemented in future phases
+
+ARCHITECTURE:
+The project follows Clean Architecture with dependency inversion:
+- Presentation depends on Application
+- Application depends on Domain
+- Infrastructure depends on Domain (via interfaces)
+- Domain has NO dependencies (pure business logic)
+
+This allows:
+✓ Easy testing (mock interfaces)
+✓ Easy hardware swapping (just implement IUTMDriver)
+✓ Easy export format addition (just implement IExportService)
+✓ UI framework changes (swap Qt with something else)

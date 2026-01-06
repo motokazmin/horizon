@@ -1,0 +1,15 @@
+/* Horizon UTM Dark Theme */
+/* To be implemented in Phase 5 */
+
+/* Based on your web design color scheme:
+ * Background: #020617 (slate-950)
+ * Card: #1e293b (slate-800)
+ * Blue accent: #3b82f6
+ * Text: white/slate colors
+ */
+
+QMainWindow {
+    background-color: #020617;
+}
+
+/* More styles will be added in Phase 5 */
