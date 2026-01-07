@@ -26,6 +26,9 @@ DashboardView::DashboardView(TestController* testController,
     , m_stressWidget(nullptr)
     , m_strainWidget(nullptr)
     , m_timeWidget(nullptr)
+    , m_progressBar(nullptr)
+    , m_progressLabel(nullptr)
+    , m_expectedDuration(100.0)  // Default: 100 seconds for mock
 {
     setupUI();
     setupConnections();
@@ -67,6 +70,29 @@ void DashboardView::setupUI() {
     metricsLayout->addWidget(m_timeWidget);
 
     mainLayout->addWidget(metricsGroup, 1);  // 25% of space
+
+    // Progress section
+    QWidget* progressWidget = new QWidget(this);
+    QVBoxLayout* progressLayout = new QVBoxLayout(progressWidget);
+    progressLayout->setContentsMargins(0, 5, 0, 0);
+    progressLayout->setSpacing(5);
+
+    m_progressLabel = new QLabel("Ready", this);
+    m_progressLabel->setAlignment(Qt::AlignCenter);
+    QFont labelFont = m_progressLabel->font();
+    labelFont.setPointSize(10);
+    m_progressLabel->setFont(labelFont);
+    progressLayout->addWidget(m_progressLabel);
+
+    m_progressBar = new QProgressBar(this);
+    m_progressBar->setRange(0, 100);
+    m_progressBar->setValue(0);
+    m_progressBar->setTextVisible(true);
+    m_progressBar->setFormat("%p%");
+    m_progressBar->setMaximumHeight(25);
+    progressLayout->addWidget(m_progressBar);
+
+    mainLayout->addWidget(progressWidget);
 }
 
 void DashboardView::setupConnections() {
@@ -126,11 +152,41 @@ void DashboardView::onSensorDataReceived(const SensorData& data) {
     m_stressWidget->setValue(data.stress);
     m_strainWidget->setValue(data.strain);
 
-    // Update time
+    // Update time and progress
     if (!m_testStartTime.isNull()) {
         qint64 elapsedMs = m_testStartTime.msecsTo(QDateTime::currentDateTime());
         double elapsedSeconds = elapsedMs / 1000.0;
         m_timeWidget->setValue(elapsedSeconds);
+
+        // Update progress bar
+        double progress = (elapsedSeconds / m_expectedDuration) * 100.0;
+        if (progress > 100.0) progress = 100.0;
+        m_progressBar->setValue(static_cast<int>(progress));
+
+        // Determine stage based on strain
+        QString stage;
+        QString color;
+        if (data.strain < 0.5) {
+            stage = "Elastic";
+            color = "#3b82f6";  // Blue
+        } else if (data.strain < 1.5) {
+            stage = "Yielding";
+            color = "#f59e0b";  // Amber
+        } else if (data.strain < 6.0) {
+            stage = "Plastic Deformation";
+            color = "#8b5cf6";  // Purple
+        } else {
+            stage = "Necking";
+            color = "#ef4444";  // Red
+        }
+
+        m_progressBar->setStyleSheet(QString("QProgressBar::chunk { background-color: %1; }").arg(color));
+
+        int remaining = static_cast<int>(m_expectedDuration - elapsedSeconds);
+        if (remaining < 0) remaining = 0;
+        m_progressLabel->setText(QString("Stage: %1 | ~%2s remaining")
+                                .arg(stage)
+                                .arg(remaining));
     }
 }
 
@@ -144,11 +200,21 @@ void DashboardView::onTestStarted(int /*testId*/) {
     m_strainWidget->setValue(0.0);
     m_timeWidget->setValue(0.0);
 
+    // Reset progress
+    m_progressBar->setValue(0);
+    m_progressBar->setStyleSheet("QProgressBar::chunk { background-color: #3b82f6; }");
+    m_progressLabel->setText("Stage: Elastic | Starting test...");
+
     // Start timer
     m_testStartTime = QDateTime::currentDateTime();
 }
 
 void DashboardView::onTestCompleted(int /*testId*/) {
+    // Complete progress
+    m_progressBar->setValue(100);
+    m_progressBar->setStyleSheet("QProgressBar::chunk { background-color: #22c55e; }"); // Green
+    m_progressLabel->setText("Test completed!");
+
     // Stop timer
     m_testStartTime = QDateTime();
 }
