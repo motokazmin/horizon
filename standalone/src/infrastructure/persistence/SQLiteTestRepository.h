@@ -21,14 +21,14 @@ public:
     bool updateTest(const Test& test) override;
     bool deleteTest(int testId) override;
     
-    Test getTest(int testId) const override;
-    QVector<Test> getAllTests() const override;
-    QVector<Test> getTestsByStatus(TestStatus status) const override;
-    QVector<Test> getTestsByDateRange(const QDateTime& start, const QDateTime& end) const override;
+    Test getTest(int testId) override;
+    QVector<Test> getAllTests() override;
+    QVector<Test> getTestsByStatus(TestStatus status) override;
+    QVector<Test> getTestsByDateRange(const QDateTime& start, const QDateTime& end) override;
     
     // Data points operations
     bool saveDataPoints(int testId, const QVector<SensorData>& data) override;
-    QVector<SensorData> getDataPoints(int testId) const override;
+    QVector<SensorData> getDataPoints(int testId) override;
     bool deleteDataPoints(int testId) override;
     
     // Sample queue operations
@@ -36,13 +36,13 @@ public:
     bool updateSample(const Sample& sample) override;
     bool deleteSample(int sampleId) override;
     
-    Sample getSample(int sampleId) const override;
-    QVector<Sample> getAllSamples() const override;
-    QVector<Sample> getSamplesByStatus(SampleStatus status) const override;
+    Sample getSample(int sampleId) override;
+    QVector<Sample> getAllSamples() override;
+    QVector<Sample> getSamplesByStatus(SampleStatus status) override;
     
     // Statistics
-    int getTestCount() const override;
-    int getTestCountByStatus(TestStatus status) const override;
+    int getTestCount() override;
+    int getTestCountByStatus(TestStatus status) override;
 
 private:
     /**
@@ -53,27 +53,27 @@ private:
     /**
      * @brief Convert Test entity to database row
      */
-    bool insertTest(const Test& test, int& outId) const;
+    bool insertTest(const Test& test, int& outId);
     
     /**
      * @brief Update existing test in database
      */
-    bool updateTestInDb(const Test& test) const;
+    bool updateTestInDb(const Test& test);
     
     /**
      * @brief Convert database row to Test entity
      */
-    Test testFromQuery(const QSqlQuery& query) const;
+    Test testFromQuery(const QSqlQuery& query);
     
     /**
      * @brief Convert Sample entity to database row
      */
-    bool insertSample(const Sample& sample, int& outId) const;
+    bool insertSample(const Sample& sample, int& outId);
     
     /**
      * @brief Convert database row to Sample entity
      */
-    Sample sampleFromQuery(const QSqlQuery& query) const;
+    Sample sampleFromQuery(const QSqlQuery& query);
 };
 
 } // namespace HorizonUTM

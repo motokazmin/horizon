@@ -77,15 +77,15 @@ bool TestController::deleteTest(int testId) {
     return success;
 }
 
-Test TestController::getTest(int testId) const {
+Test TestController::getTest(int testId) {
     return m_repository->getTest(testId);
 }
 
-QVector<Test> TestController::getAllTests() const {
+QVector<Test> TestController::getAllTests() {
     return m_repository->getAllTests();
 }
 
-QVector<Test> TestController::getTestsByStatus(TestStatus status) const {
+QVector<Test> TestController::getTestsByStatus(TestStatus status) {
     return m_repository->getTestsByStatus(status);
 }
 
@@ -162,25 +162,25 @@ bool TestController::deleteSample(int sampleId) {
     return m_repository->deleteSample(sampleId);
 }
 
-Sample TestController::getSample(int sampleId) const {
+Sample TestController::getSample(int sampleId) {
     return m_repository->getSample(sampleId);
 }
 
-QVector<Sample> TestController::getAllSamples() const {
+QVector<Sample> TestController::getAllSamples() {
     return m_repository->getAllSamples();
 }
 
-QVector<Sample> TestController::getSamplesByStatus(SampleStatus status) const {
+QVector<Sample> TestController::getSamplesByStatus(SampleStatus status) {
     return m_repository->getSamplesByStatus(status);
 }
 
 // Statistics
 
-int TestController::getTestCount() const {
+int TestController::getTestCount() {
     return m_repository->getTestCount();
 }
 
-int TestController::getCompletedTestCount() const {
+int TestController::getCompletedTestCount() {
     return m_repository->getTestCountByStatus(TestStatus::Completed);
 }
 

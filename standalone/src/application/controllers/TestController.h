@@ -53,17 +53,17 @@ public:
     /**
      * @brief Get test by ID
      */
-    Test getTest(int testId) const;
+    Test getTest(int testId);
     
     /**
      * @brief Get all tests
      */
-    QVector<Test> getAllTests() const;
+    QVector<Test> getAllTests();
     
     /**
      * @brief Get tests by status
      */
-    QVector<Test> getTestsByStatus(TestStatus status) const;
+    QVector<Test> getTestsByStatus(TestStatus status);
     
     /**
      * @brief Process new sensor data point
@@ -89,15 +89,15 @@ public:
     bool saveSample(Sample& sample);
     bool updateSample(const Sample& sample);
     bool deleteSample(int sampleId);
-    Sample getSample(int sampleId) const;
-    QVector<Sample> getAllSamples() const;
-    QVector<Sample> getSamplesByStatus(SampleStatus status) const;
+    Sample getSample(int sampleId);
+    QVector<Sample> getAllSamples();
+    QVector<Sample> getSamplesByStatus(SampleStatus status);
     
     /**
      * @brief Get statistics
      */
-    int getTestCount() const;
-    int getCompletedTestCount() const;
+    int getTestCount();
+    int getCompletedTestCount();
 
 signals:
     /**

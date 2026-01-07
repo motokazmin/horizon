@@ -38,22 +38,22 @@ int main(int argc, char *argv[]) {
     }
     LOG_INFO("Database initialized");
     
-    // Create infrastructure components
-    MockUTMDriver utmDriver;
-    SQLiteTestRepository repository;
-    CSVExportService csvExporter;
+    // Create infrastructure components (all through new for proper initialization)
+    MockUTMDriver* utmDriver = new MockUTMDriver();
+    SQLiteTestRepository* repository = new SQLiteTestRepository();
+    CSVExportService* csvExporter = new CSVExportService();
     
     // Create application controllers
-    TestController testController(&repository);
-    HardwareController hardwareController(&utmDriver, &testController);
-    DataExportController exportController;
+    TestController* testController = new TestController(repository);
+    HardwareController* hardwareController = new HardwareController(utmDriver, testController);
+    DataExportController* exportController = new DataExportController();
     
     // Register export services
-    exportController.registerExportService(&csvExporter);
+    exportController->registerExportService(csvExporter);
     
     // Create and show main window
-    MainWindow mainWindow(&testController, &hardwareController, &exportController);
-    mainWindow.show();
+    MainWindow* mainWindow = new MainWindow(testController, hardwareController, exportController);
+    mainWindow->show();
     
     LOG_INFO("Application started successfully");
     
@@ -61,6 +61,15 @@ int main(int argc, char *argv[]) {
     
     // Cleanup
     LOG_INFO("Application shutting down");
+    
+    delete mainWindow;
+    delete exportController;
+    delete hardwareController;
+    delete testController;
+    delete csvExporter;
+    delete repository;
+    delete utmDriver;
+    
     dbManager.close();
     
     LOG_INFO("=== Horizon UTM Stopped ===");

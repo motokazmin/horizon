@@ -3,6 +3,8 @@
 #include <QtMath>
 #include <QRandomGenerator>
 #include <QThread>
+#include <QDebug>
+#include <QTimer>
 
 namespace HorizonUTM {
 
@@ -29,7 +31,7 @@ MockUTMDriver::MockUTMDriver(QObject* parent)
     , m_dataPointCount(0)
 {
     QObject::connect(m_timer, &QTimer::timeout, this, &MockUTMDriver::generateDataPoint);
-    
+
     LOG_INFO("MockUTMDriver created");
 }
 
@@ -45,18 +47,20 @@ bool MockUTMDriver::connect(const QString& connectionString) {
         LOG_WARNING("MockUTMDriver already connected");
         return true;
     }
-    
+
     LOG_INFO(QString("MockUTMDriver connecting: %1").arg(connectionString));
-    
-    // Simulate connection delay
-    QThread::msleep(100);
-    
+
     m_connected = true;
     m_state = MachineState::Idle;
-    
+
+    qDebug() << "=== MockUTMDriver: About to emit signals ===";
+    qDebug() << "=== this pointer:" << this;
+
     emit connected();
     emit stateChanged(m_state);
-    
+
+    qDebug() << "=== MockUTMDriver: Signals emitted ===";
+
     LOG_INFO("MockUTMDriver connected successfully");
     return true;
 }
@@ -65,18 +69,18 @@ bool MockUTMDriver::disconnect() {
     if (!m_connected) {
         return true;
     }
-    
+
     // Stop test if running
     if (m_state == MachineState::Running) {
         stopTest();
     }
-    
+
     m_connected = false;
     m_state = MachineState::Disconnected;
-    
+
     emit disconnected();
     emit stateChanged(m_state);
-    
+
     LOG_INFO("MockUTMDriver disconnected");
     return true;
 }
@@ -95,28 +99,28 @@ bool MockUTMDriver::startTest(double speedMmPerMin, double forceLimitN) {
         emit errorOccurred("Not connected");
         return false;
     }
-    
+
     if (m_state == MachineState::Running) {
         LOG_WARNING("Test already running");
         return false;
     }
-    
+
     m_speed = speedMmPerMin;
     m_forceLimit = forceLimitN;
-    
+
     resetSimulation();
-    
+
     m_state = MachineState::Running;
     m_testStartTime = QDateTime::currentMSecsSinceEpoch();
-    
+
     // Start data generation at 100 Hz
     m_timer->start(1000 / m_samplingRateHz);
-    
+
     emit stateChanged(m_state);
-    
+
     LOG_INFO(QString("Test started: speed=%.2f mm/min, limit=%.0f N")
         .arg(m_speed).arg(m_forceLimit));
-    
+
     return true;
 }
 
@@ -124,21 +128,21 @@ bool MockUTMDriver::stopTest() {
     if (m_state != MachineState::Running && m_state != MachineState::Paused) {
         return false;
     }
-    
+
     m_timer->stop();
     m_state = MachineState::Stopping;
     emit stateChanged(m_state);
-    
+
     // Simulate stop delay
     QThread::msleep(50);
-    
+
     m_state = MachineState::Idle;
     emit stateChanged(m_state);
     emit testCompleted();
-    
+
     LOG_INFO(QString("Test stopped at %.2f%% strain, %d data points")
         .arg(m_currentStrain).arg(m_dataPointCount));
-    
+
     return true;
 }
 
@@ -146,11 +150,11 @@ bool MockUTMDriver::pauseTest() {
     if (m_state != MachineState::Running) {
         return false;
     }
-    
+
     m_timer->stop();
     m_state = MachineState::Paused;
     emit stateChanged(m_state);
-    
+
     LOG_INFO("Test paused");
     return true;
 }
@@ -159,11 +163,11 @@ bool MockUTMDriver::resumeTest() {
     if (m_state != MachineState::Paused) {
         return false;
     }
-    
+
     m_timer->start(1000 / m_samplingRateHz);
     m_state = MachineState::Running;
     emit stateChanged(m_state);
-    
+
     LOG_INFO("Test resumed");
     return true;
 }
@@ -173,7 +177,7 @@ bool MockUTMDriver::setSpeed(double speedMmPerMin) {
         LOG_ERROR(QString("Invalid speed: %.2f mm/min").arg(speedMmPerMin));
         return false;
     }
-    
+
     m_speed = speedMmPerMin;
     LOG_DEBUG(QString("Speed set to %.2f mm/min").arg(m_speed));
     return true;
@@ -188,7 +192,7 @@ bool MockUTMDriver::zero() {
         LOG_WARNING("Cannot zero while test is running");
         return false;
     }
-    
+
     resetSimulation();
     LOG_INFO("Sensors zeroed");
     return true;
@@ -209,38 +213,38 @@ void MockUTMDriver::generateDataPoint() {
     // Calculate elapsed time
     qint64 currentMs = QDateTime::currentMSecsSinceEpoch();
     m_currentTime = (currentMs - m_testStartTime) / 1000.0; // seconds
-    
+
     // Calculate extension based on speed
     m_currentExtension = (m_speed / 60.0) * m_currentTime; // mm
-    
+
     // Calculate strain
     m_currentStrain = (m_currentExtension / m_gaugeLength) * 100.0; // %
-    
+
     // Check if test should complete (material break)
     if (m_currentStrain >= m_breakStrain) {
         stopTest();
         return;
     }
-    
+
     // Simulate stress-strain curve
     m_currentStress = simulateStressCurve(m_currentStrain);
-    
+
     // Calculate force
     m_currentForce = stressToForce(m_currentStress);
-    
+
     // Check force limit
     if (m_currentForce >= m_forceLimit) {
         LOG_WARNING(QString("Force limit reached: %.0f N").arg(m_currentForce));
         stopTest();
         return;
     }
-    
+
     // Create and emit sensor data
     SensorData data = getCurrentData();
     emit sensorDataReceived(data);
-    
+
     m_dataPointCount++;
-    
+
     // Log every 100 points
     if (m_dataPointCount % 100 == 0) {
         LOG_DEBUG(QString("Data point %1: Strain=%.3f%%, Stress=%.2f MPa, Force=%.0f N")
@@ -251,12 +255,12 @@ void MockUTMDriver::generateDataPoint() {
 double MockUTMDriver::simulateStressCurve(double strain) {
     // Realistic stress-strain curve for plastic material
     // Phases: elastic → yield → plastic deformation → necking → break
-    
+
     if (strain <= 0) return 0.0;
-    
+
     // Add small random noise (±0.5%)
     double noise = (QRandomGenerator::global()->bounded(200) - 100) / 10000.0;
-    
+
     // Phase 1: Linear elastic region (0 to ~0.5% strain)
     double elasticLimit = 0.5; // % strain
     if (strain <= elasticLimit) {
@@ -264,17 +268,17 @@ double MockUTMDriver::simulateStressCurve(double strain) {
         double stress = (m_elasticModulus * 1000.0) * (strain / 100.0); // Convert GPa to MPa
         return stress * (1.0 + noise);
     }
-    
+
     // Phase 2: Yield point (~0.5% to 1.5% strain)
     double yieldEnd = 1.5;
     if (strain <= yieldEnd) {
         // Transition from elastic to plastic
         double t = (strain - elasticLimit) / (yieldEnd - elasticLimit);
-        double stress = m_elasticModulus * 1000.0 * (elasticLimit / 100.0) + 
+        double stress = m_elasticModulus * 1000.0 * (elasticLimit / 100.0) +
                        (m_yieldStress - m_elasticModulus * 1000.0 * (elasticLimit / 100.0)) * t;
         return stress * (1.0 + noise);
     }
-    
+
     // Phase 3: Plastic deformation (1.5% to 5% strain)
     double plasticEnd = 5.0;
     if (strain <= plasticEnd) {
@@ -283,7 +287,7 @@ double MockUTMDriver::simulateStressCurve(double strain) {
         double stress = m_yieldStress + (m_ultimateStress - m_yieldStress) * t;
         return stress * (1.0 + noise);
     }
-    
+
     // Phase 4: Necking and approaching break (5% to break)
     double t = (strain - plasticEnd) / (m_breakStrain - plasticEnd);
     // Stress decreases slightly after ultimate

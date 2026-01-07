@@ -23,14 +23,14 @@ public:
     virtual bool updateTest(const Test& test) = 0;
     virtual bool deleteTest(int testId) = 0;
     
-    virtual Test getTest(int testId) const = 0;
-    virtual QVector<Test> getAllTests() const = 0;
-    virtual QVector<Test> getTestsByStatus(TestStatus status) const = 0;
-    virtual QVector<Test> getTestsByDateRange(const QDateTime& start, const QDateTime& end) const = 0;
+    virtual Test getTest(int testId) = 0;
+    virtual QVector<Test> getAllTests() = 0;
+    virtual QVector<Test> getTestsByStatus(TestStatus status) = 0;
+    virtual QVector<Test> getTestsByDateRange(const QDateTime& start, const QDateTime& end) = 0;
     
     // Data points operations
     virtual bool saveDataPoints(int testId, const QVector<SensorData>& data) = 0;
-    virtual QVector<SensorData> getDataPoints(int testId) const = 0;
+    virtual QVector<SensorData> getDataPoints(int testId) = 0;
     virtual bool deleteDataPoints(int testId) = 0;
     
     // Sample queue operations
@@ -38,13 +38,13 @@ public:
     virtual bool updateSample(const Sample& sample) = 0;
     virtual bool deleteSample(int sampleId) = 0;
     
-    virtual Sample getSample(int sampleId) const = 0;
-    virtual QVector<Sample> getAllSamples() const = 0;
-    virtual QVector<Sample> getSamplesByStatus(SampleStatus status) const = 0;
+    virtual Sample getSample(int sampleId) = 0;
+    virtual QVector<Sample> getAllSamples() = 0;
+    virtual QVector<Sample> getSamplesByStatus(SampleStatus status) = 0;
     
     // Statistics
-    virtual int getTestCount() const = 0;
-    virtual int getTestCountByStatus(TestStatus status) const = 0;
+    virtual int getTestCount() = 0;
+    virtual int getTestCountByStatus(TestStatus status) = 0;
 };
 
 } // namespace HorizonUTM

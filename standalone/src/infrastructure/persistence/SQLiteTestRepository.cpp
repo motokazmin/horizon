@@ -47,7 +47,7 @@ bool SQLiteTestRepository::saveTest(const Test& test) {
     return true;
 }
 
-bool SQLiteTestRepository::insertTest(const Test& test, int& outId) const {
+bool SQLiteTestRepository::insertTest(const Test& test, int& outId) {
     QSqlQuery query(getDatabase());
     
     query.prepare(R"(
@@ -105,7 +105,7 @@ bool SQLiteTestRepository::updateTest(const Test& test) {
     return saveTest(test);
 }
 
-bool SQLiteTestRepository::updateTestInDb(const Test& test) const {
+bool SQLiteTestRepository::updateTestInDb(const Test& test) {
     QSqlQuery query(getDatabase());
     
     query.prepare(R"(
@@ -177,7 +177,7 @@ bool SQLiteTestRepository::deleteTest(int testId) {
     return true;
 }
 
-Test SQLiteTestRepository::getTest(int testId) const {
+Test SQLiteTestRepository::getTest(int testId) {
     QSqlQuery query(getDatabase());
     query.prepare("SELECT * FROM tests WHERE id = :id");
     query.bindValue(":id", testId);
@@ -196,7 +196,7 @@ Test SQLiteTestRepository::getTest(int testId) const {
     return test;
 }
 
-QVector<Test> SQLiteTestRepository::getAllTests() const {
+QVector<Test> SQLiteTestRepository::getAllTests() {
     QVector<Test> tests;
     
     QSqlQuery query(getDatabase());
@@ -213,7 +213,7 @@ QVector<Test> SQLiteTestRepository::getAllTests() const {
     return tests;
 }
 
-QVector<Test> SQLiteTestRepository::getTestsByStatus(TestStatus status) const {
+QVector<Test> SQLiteTestRepository::getTestsByStatus(TestStatus status) {
     QVector<Test> tests;
     
     QSqlQuery query(getDatabase());
@@ -232,7 +232,7 @@ QVector<Test> SQLiteTestRepository::getTestsByStatus(TestStatus status) const {
     return tests;
 }
 
-QVector<Test> SQLiteTestRepository::getTestsByDateRange(const QDateTime& start, const QDateTime& end) const {
+QVector<Test> SQLiteTestRepository::getTestsByDateRange(const QDateTime& start, const QDateTime& end) {
     QVector<Test> tests;
     
     QSqlQuery query(getDatabase());
@@ -252,7 +252,7 @@ QVector<Test> SQLiteTestRepository::getTestsByDateRange(const QDateTime& start, 
     return tests;
 }
 
-Test SQLiteTestRepository::testFromQuery(const QSqlQuery& query) const {
+Test SQLiteTestRepository::testFromQuery(const QSqlQuery& query) {
     Test test(query.value("id").toInt());
     
     test.setSampleName(query.value("sample_name").toString());
@@ -336,7 +336,7 @@ bool SQLiteTestRepository::saveDataPoints(int testId, const QVector<SensorData>&
     return true;
 }
 
-QVector<SensorData> SQLiteTestRepository::getDataPoints(int testId) const {
+QVector<SensorData> SQLiteTestRepository::getDataPoints(int testId) {
     QVector<SensorData> data;
     
     QSqlQuery query(getDatabase());
@@ -388,7 +388,7 @@ bool SQLiteTestRepository::saveSample(const Sample& sample) {
     }
 }
 
-bool SQLiteTestRepository::insertSample(const Sample& sample, int& outId) const {
+bool SQLiteTestRepository::insertSample(const Sample& sample, int& outId) {
     QSqlQuery query(getDatabase());
     
     query.prepare(R"(
@@ -470,7 +470,7 @@ bool SQLiteTestRepository::deleteSample(int sampleId) {
     return true;
 }
 
-Sample SQLiteTestRepository::getSample(int sampleId) const {
+Sample SQLiteTestRepository::getSample(int sampleId) {
     QSqlQuery query(getDatabase());
     query.prepare("SELECT * FROM samples WHERE id = :id");
     query.bindValue(":id", sampleId);
@@ -483,7 +483,7 @@ Sample SQLiteTestRepository::getSample(int sampleId) const {
     return sampleFromQuery(query);
 }
 
-QVector<Sample> SQLiteTestRepository::getAllSamples() const {
+QVector<Sample> SQLiteTestRepository::getAllSamples() {
     QVector<Sample> samples;
     
     QSqlQuery query(getDatabase());
@@ -499,7 +499,7 @@ QVector<Sample> SQLiteTestRepository::getAllSamples() const {
     return samples;
 }
 
-QVector<Sample> SQLiteTestRepository::getSamplesByStatus(SampleStatus status) const {
+QVector<Sample> SQLiteTestRepository::getSamplesByStatus(SampleStatus status) {
     QVector<Sample> samples;
     
     QSqlQuery query(getDatabase());
@@ -518,7 +518,7 @@ QVector<Sample> SQLiteTestRepository::getSamplesByStatus(SampleStatus status) co
     return samples;
 }
 
-Sample SQLiteTestRepository::sampleFromQuery(const QSqlQuery& query) const {
+Sample SQLiteTestRepository::sampleFromQuery(const QSqlQuery& query) {
     Sample sample(query.value("id").toInt());
     
     sample.setName(query.value("name").toString());
@@ -542,7 +542,7 @@ Sample SQLiteTestRepository::sampleFromQuery(const QSqlQuery& query) const {
 
 // ==================== STATISTICS ====================
 
-int SQLiteTestRepository::getTestCount() const {
+int SQLiteTestRepository::getTestCount() {
     QSqlQuery query(getDatabase());
     if (!query.exec("SELECT COUNT(*) FROM tests")) {
         return 0;
@@ -551,7 +551,7 @@ int SQLiteTestRepository::getTestCount() const {
     return query.next() ? query.value(0).toInt() : 0;
 }
 
-int SQLiteTestRepository::getTestCountByStatus(TestStatus status) const {
+int SQLiteTestRepository::getTestCountByStatus(TestStatus status) {
     QSqlQuery query(getDatabase());
     query.prepare("SELECT COUNT(*) FROM tests WHERE status = :status");
     query.bindValue(":status", testStatusToString(status));

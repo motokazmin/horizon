@@ -214,7 +214,13 @@ void MainWindow::showSettings() {
 // Action slots
 
 void MainWindow::onConnectHardware() {
-    if (m_hardwareController->connectToHardware("mock")) {
+    qDebug() << "=== CONNECT BUTTON PRESSED ===";
+
+    bool result = m_hardwareController->connectToHardware("mock");
+    qDebug() << "=== connectToHardware returned:" << result;
+    qDebug() << "=== isConnected:" << m_hardwareController->isConnected();
+
+    if (result) {
         LOG_INFO("Hardware connection initiated");
     } else {
         QMessageBox::critical(this, "Connection Error", "Failed to connect to hardware");
