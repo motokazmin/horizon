@@ -140,8 +140,8 @@ bool MockUTMDriver::stopTest() {
     emit stateChanged(m_state);
     emit testCompleted();
 
-    LOG_INFO(QString("Test stopped at %.2f%% strain, %d data points")
-        .arg(m_currentStrain).arg(m_dataPointCount));
+    LOG_INFO(QString("Test stopped at %1% strain, %2 data points")
+        .arg(m_currentStrain, 0, 'f', 2).arg(m_dataPointCount));
 
     return true;
 }
@@ -174,12 +174,12 @@ bool MockUTMDriver::resumeTest() {
 
 bool MockUTMDriver::setSpeed(double speedMmPerMin) {
     if (speedMmPerMin <= 0 || speedMmPerMin > 500) {
-        LOG_ERROR(QString("Invalid speed: %.2f mm/min").arg(speedMmPerMin));
+        LOG_ERROR(QString("Invalid speed: %1 mm/min").arg(speedMmPerMin, 0, 'f', 2));
         return false;
     }
 
     m_speed = speedMmPerMin;
-    LOG_DEBUG(QString("Speed set to %.2f mm/min").arg(m_speed));
+    LOG_DEBUG(QString("Speed set to %1 mm/min").arg(m_speed, 0, 'f', 2));
     return true;
 }
 

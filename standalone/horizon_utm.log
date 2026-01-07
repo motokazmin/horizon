@@ -1,0 +1,148 @@
+2026-01-07 23:14:29.948 [INFO] [main]: === Horizon UTM Starting ===
+2026-01-07 23:14:29.948 [INFO] [initialize]: Initializing database: horizon_utm.db
+2026-01-07 23:14:29.949 [INFO] [initialize]: Database opened successfully
+2026-01-07 23:14:29.949 [INFO] [initialize]: Schema not found, creating...
+2026-01-07 23:14:30.011 [INFO] [createTables]: Database tables created
+2026-01-07 23:14:30.102 [INFO] [createIndexes]: Database indexes created
+2026-01-07 23:14:30.119 [INFO] [createTriggers]: Database triggers created
+2026-01-07 23:14:30.119 [INFO] [createSchema]: Database schema created successfully
+2026-01-07 23:14:30.119 [INFO] [initialize]: Database initialized successfully
+2026-01-07 23:14:30.119 [INFO] [main]: Database initialized
+2026-01-07 23:14:30.119 [INFO] [MockUTMDriver]: MockUTMDriver created
+2026-01-07 23:14:30.120 [INFO] [SQLiteTestRepository]: SQLiteTestRepository created
+2026-01-07 23:14:30.120 [INFO] [TestController]: TestController created
+2026-01-07 23:14:30.120 [INFO] [HardwareController]: HardwareController created
+2026-01-07 23:14:30.120 [INFO] [DataExportController]: DataExportController created
+2026-01-07 23:14:30.120 [INFO] [registerExportService]: Registered export service: csv
+2026-01-07 23:14:30.151 [DEBUG] [getAllTests]: Retrieved 0 tests
+2026-01-07 23:14:30.151 [INFO] [loadTests]: Loaded 0 tests
+2026-01-07 23:14:30.157 [INFO] [MainWindow]: MainWindow created
+2026-01-07 23:14:30.161 [INFO] [main]: Application started successfully
+2026-01-07 23:15:04.002 [DEBUG] [getAllTests]: Retrieved 0 tests
+2026-01-07 23:15:04.002 [INFO] [loadTests]: Loaded 0 tests
+2026-01-07 23:15:11.631 [INFO] [connectToHardware]: Connecting to hardware: mock
+2026-01-07 23:15:11.632 [INFO] [connect]: MockUTMDriver connecting: mock
+2026-01-07 23:15:11.632 [INFO] [onDriverConnected]: Driver connected
+2026-01-07 23:15:11.632 [INFO] [onHardwareConnected]: Hardware connected - UI updated
+2026-01-07 23:15:11.632 [DEBUG] [onStateChanged]: Machine state changed: 1
+2026-01-07 23:15:11.632 [INFO] [connect]: MockUTMDriver connected successfully
+2026-01-07 23:15:11.632 [INFO] [onConnectHardware]: Hardware connection initiated
+2026-01-07 23:15:26.852 [INFO] [onAccept]: Test configured: test1 by rkata
+2026-01-07 23:15:26.854 [INFO] [createNewTest]: New test created
+2026-01-07 23:15:26.876 [INFO] [saveTest]: Test saved: ID=1, Sample=test1
+2026-01-07 23:15:26.876 [INFO] [saveTest]: Test saved: ID=1, Sample=test1
+2026-01-07 23:15:26.876 [DEBUG] [onStateChanged]: Machine state changed: 2
+2026-01-07 23:15:26.876 [INFO] [startTest]: Test started: speed=5 mm/min, limit=10000 N
+2026-01-07 23:15:26.876 [INFO] [startTest]: Test started: ID=1, Sample=test1
+2026-01-07 23:15:26.878 [DEBUG] [clearData]: Chart data cleared
+2026-01-07 23:15:27.877 [DEBUG] [processSensorData]: Processed 100 data points for test ID=1
+2026-01-07 23:15:27.879 [DEBUG] [generateDataPoint]: Data point 100: Strain=0.167%, Stress=5.02 MPa, Force=201 N
+2026-01-07 23:15:28.877 [DEBUG] [processSensorData]: Processed 200 data points for test ID=1
+2026-01-07 23:15:28.880 [DEBUG] [generateDataPoint]: Data point 200: Strain=0.333%, Stress=9.96 MPa, Force=399 N
+2026-01-07 23:15:29.876 [DEBUG] [processSensorData]: Processed 300 data points for test ID=1
+2026-01-07 23:15:29.878 [DEBUG] [generateDataPoint]: Data point 300: Strain=0.500%, Stress=15.05 MPa, Force=602 N
+2026-01-07 23:15:30.877 [DEBUG] [processSensorData]: Processed 400 data points for test ID=1
+2026-01-07 23:15:30.879 [DEBUG] [generateDataPoint]: Data point 400: Strain=0.667%, Stress=20.64 MPa, Force=826 N
+2026-01-07 23:15:31.877 [DEBUG] [processSensorData]: Processed 500 data points for test ID=1
+2026-01-07 23:15:31.879 [DEBUG] [generateDataPoint]: Data point 500: Strain=0.834%, Stress=26.88 MPa, Force=1075 N
+2026-01-07 23:15:32.877 [DEBUG] [processSensorData]: Processed 600 data points for test ID=1
+2026-01-07 23:15:32.883 [DEBUG] [generateDataPoint]: Data point 600: Strain=1.000%, Stress=32.35 MPa, Force=1294 N
+2026-01-07 23:15:33.877 [DEBUG] [processSensorData]: Processed 700 data points for test ID=1
+2026-01-07 23:15:33.883 [DEBUG] [generateDataPoint]: Data point 700: Strain=1.167%, Stress=38.20 MPa, Force=1528 N
+2026-01-07 23:15:34.877 [DEBUG] [processSensorData]: Processed 800 data points for test ID=1
+2026-01-07 23:15:34.884 [DEBUG] [generateDataPoint]: Data point 800: Strain=1.333%, Stress=44.59 MPa, Force=1784 N
+2026-01-07 23:15:35.877 [DEBUG] [processSensorData]: Processed 900 data points for test ID=1
+2026-01-07 23:15:35.885 [DEBUG] [generateDataPoint]: Data point 900: Strain=1.500%, Stress=49.70 MPa, Force=1988 N
+2026-01-07 23:15:36.877 [DEBUG] [processSensorData]: Processed 1000 data points for test ID=1
+2026-01-07 23:15:36.881 [DEBUG] [generateDataPoint]: Data point 1000: Strain=1.667%, Stress=50.94 MPa, Force=2038 N
+2026-01-07 23:15:37.877 [DEBUG] [processSensorData]: Processed 1100 data points for test ID=1
+2026-01-07 23:15:37.886 [DEBUG] [generateDataPoint]: Data point 1100: Strain=1.834%, Stress=50.99 MPa, Force=2040 N
+2026-01-07 23:15:38.887 [DEBUG] [processSensorData]: Processed 1200 data points for test ID=1
+2026-01-07 23:15:38.901 [DEBUG] [generateDataPoint]: Data point 1200: Strain=2.002%, Stress=51.33 MPa, Force=2053 N
+2026-01-07 23:15:39.887 [DEBUG] [processSensorData]: Processed 1300 data points for test ID=1
+2026-01-07 23:15:39.903 [DEBUG] [generateDataPoint]: Data point 1300: Strain=2.168%, Stress=52.11 MPa, Force=2084 N
+2026-01-07 23:15:40.888 [DEBUG] [processSensorData]: Processed 1400 data points for test ID=1
+2026-01-07 23:15:40.903 [DEBUG] [generateDataPoint]: Data point 1400: Strain=2.335%, Stress=52.72 MPa, Force=2109 N
+2026-01-07 23:15:41.888 [DEBUG] [processSensorData]: Processed 1500 data points for test ID=1
+2026-01-07 23:15:41.904 [DEBUG] [generateDataPoint]: Data point 1500: Strain=2.502%, Stress=53.21 MPa, Force=2128 N
+2026-01-07 23:15:42.888 [DEBUG] [processSensorData]: Processed 1600 data points for test ID=1
+2026-01-07 23:15:42.904 [DEBUG] [generateDataPoint]: Data point 1600: Strain=2.669%, Stress=53.57 MPa, Force=2143 N
+2026-01-07 23:15:43.887 [DEBUG] [processSensorData]: Processed 1700 data points for test ID=1
+2026-01-07 23:15:43.903 [DEBUG] [generateDataPoint]: Data point 1700: Strain=2.835%, Stress=53.59 MPa, Force=2144 N
+2026-01-07 23:15:44.898 [DEBUG] [processSensorData]: Processed 1800 data points for test ID=1
+2026-01-07 23:15:44.916 [DEBUG] [generateDataPoint]: Data point 1800: Strain=3.004%, Stress=54.70 MPa, Force=2188 N
+2026-01-07 23:15:45.908 [DEBUG] [processSensorData]: Processed 1900 data points for test ID=1
+2026-01-07 23:15:45.925 [DEBUG] [generateDataPoint]: Data point 1900: Strain=3.172%, Stress=54.63 MPa, Force=2185 N
+2026-01-07 23:15:46.930 [DEBUG] [processSensorData]: Processed 2000 data points for test ID=1
+2026-01-07 23:15:46.949 [DEBUG] [generateDataPoint]: Data point 2000: Strain=3.342%, Stress=54.81 MPa, Force=2192 N
+2026-01-07 23:15:47.986 [DEBUG] [processSensorData]: Processed 2100 data points for test ID=1
+2026-01-07 23:15:48.002 [DEBUG] [generateDataPoint]: Data point 2100: Strain=3.518%, Stress=55.26 MPa, Force=2211 N
+2026-01-07 23:15:49.031 [DEBUG] [processSensorData]: Processed 2200 data points for test ID=1
+2026-01-07 23:15:49.049 [DEBUG] [generateDataPoint]: Data point 2200: Strain=3.692%, Stress=56.24 MPa, Force=2250 N
+2026-01-07 23:15:50.120 [DEBUG] [processSensorData]: Processed 2300 data points for test ID=1
+2026-01-07 23:15:50.139 [DEBUG] [generateDataPoint]: Data point 2300: Strain=3.874%, Stress=57.15 MPa, Force=2286 N
+2026-01-07 23:15:51.211 [DEBUG] [processSensorData]: Processed 2400 data points for test ID=1
+2026-01-07 23:15:51.231 [DEBUG] [generateDataPoint]: Data point 2400: Strain=4.056%, Stress=57.71 MPa, Force=2308 N
+2026-01-07 23:15:52.323 [DEBUG] [processSensorData]: Processed 2500 data points for test ID=1
+2026-01-07 23:15:52.342 [DEBUG] [generateDataPoint]: Data point 2500: Strain=4.241%, Stress=57.87 MPa, Force=2315 N
+2026-01-07 23:15:53.429 [DEBUG] [processSensorData]: Processed 2600 data points for test ID=1
+2026-01-07 23:15:53.448 [DEBUG] [generateDataPoint]: Data point 2600: Strain=4.425%, Stress=58.67 MPa, Force=2347 N
+2026-01-07 23:15:54.520 [DEBUG] [processSensorData]: Processed 2700 data points for test ID=1
+2026-01-07 23:15:54.538 [DEBUG] [generateDataPoint]: Data point 2700: Strain=4.607%, Stress=58.30 MPa, Force=2332 N
+2026-01-07 23:15:55.602 [DEBUG] [processSensorData]: Processed 2800 data points for test ID=1
+2026-01-07 23:15:55.620 [DEBUG] [generateDataPoint]: Data point 2800: Strain=4.788%, Stress=59.35 MPa, Force=2374 N
+2026-01-07 23:15:56.716 [DEBUG] [processSensorData]: Processed 2900 data points for test ID=1
+2026-01-07 23:15:56.736 [DEBUG] [generateDataPoint]: Data point 2900: Strain=4.973%, Stress=60.48 MPa, Force=2419 N
+2026-01-07 23:15:57.836 [DEBUG] [processSensorData]: Processed 3000 data points for test ID=1
+2026-01-07 23:15:57.856 [DEBUG] [generateDataPoint]: Data point 3000: Strain=5.160%, Stress=59.25 MPa, Force=2370 N
+2026-01-07 23:15:58.919 [DEBUG] [processSensorData]: Processed 3100 data points for test ID=1
+2026-01-07 23:15:58.937 [DEBUG] [generateDataPoint]: Data point 3100: Strain=5.340%, Stress=58.83 MPa, Force=2353 N
+2026-01-07 23:16:00.003 [DEBUG] [processSensorData]: Processed 3200 data points for test ID=1
+2026-01-07 23:16:00.016 [DEBUG] [generateDataPoint]: Data point 3200: Strain=5.521%, Stress=57.50 MPa, Force=2300 N
+2026-01-07 23:16:01.068 [DEBUG] [processSensorData]: Processed 3300 data points for test ID=1
+2026-01-07 23:16:01.087 [DEBUG] [generateDataPoint]: Data point 3300: Strain=5.699%, Stress=56.86 MPa, Force=2274 N
+2026-01-07 23:16:02.189 [DEBUG] [processSensorData]: Processed 3400 data points for test ID=1
+2026-01-07 23:16:02.209 [DEBUG] [generateDataPoint]: Data point 3400: Strain=5.886%, Stress=56.05 MPa, Force=2242 N
+2026-01-07 23:16:03.309 [DEBUG] [processSensorData]: Processed 3500 data points for test ID=1
+2026-01-07 23:16:03.329 [DEBUG] [generateDataPoint]: Data point 3500: Strain=6.072%, Stress=55.81 MPa, Force=2232 N
+2026-01-07 23:16:04.426 [DEBUG] [processSensorData]: Processed 3600 data points for test ID=1
+2026-01-07 23:16:04.446 [DEBUG] [generateDataPoint]: Data point 3600: Strain=6.258%, Stress=55.49 MPa, Force=2220 N
+2026-01-07 23:16:05.532 [DEBUG] [processSensorData]: Processed 3700 data points for test ID=1
+2026-01-07 23:16:05.551 [DEBUG] [generateDataPoint]: Data point 3700: Strain=6.443%, Stress=54.03 MPa, Force=2161 N
+2026-01-07 23:16:06.645 [DEBUG] [processSensorData]: Processed 3800 data points for test ID=1
+2026-01-07 23:16:06.666 [DEBUG] [generateDataPoint]: Data point 3800: Strain=6.628%, Stress=53.06 MPa, Force=2122 N
+2026-01-07 23:16:07.740 [DEBUG] [processSensorData]: Processed 3900 data points for test ID=1
+2026-01-07 23:16:07.758 [DEBUG] [generateDataPoint]: Data point 3900: Strain=6.811%, Stress=53.04 MPa, Force=2121 N
+2026-01-07 23:16:08.833 [DEBUG] [processSensorData]: Processed 4000 data points for test ID=1
+2026-01-07 23:16:08.853 [DEBUG] [generateDataPoint]: Data point 4000: Strain=6.993%, Stress=51.94 MPa, Force=2078 N
+2026-01-07 23:16:09.951 [DEBUG] [processSensorData]: Processed 4100 data points for test ID=1
+2026-01-07 23:16:09.973 [DEBUG] [generateDataPoint]: Data point 4100: Strain=7.179%, Stress=50.85 MPa, Force=2034 N
+2026-01-07 23:16:11.081 [DEBUG] [processSensorData]: Processed 4200 data points for test ID=1
+2026-01-07 23:16:11.101 [DEBUG] [generateDataPoint]: Data point 4200: Strain=7.367%, Stress=50.99 MPa, Force=2039 N
+2026-01-07 23:16:12.189 [DEBUG] [processSensorData]: Processed 4300 data points for test ID=1
+2026-01-07 23:16:12.210 [DEBUG] [generateDataPoint]: Data point 4300: Strain=7.552%, Stress=50.04 MPa, Force=2001 N
+2026-01-07 23:16:13.275 [DEBUG] [processSensorData]: Processed 4400 data points for test ID=1
+2026-01-07 23:16:13.295 [DEBUG] [generateDataPoint]: Data point 4400: Strain=7.733%, Stress=48.62 MPa, Force=1945 N
+2026-01-07 23:16:14.320 [DEBUG] [processSensorData]: Processed 4500 data points for test ID=1
+2026-01-07 23:16:14.338 [DEBUG] [generateDataPoint]: Data point 4500: Strain=7.907%, Stress=48.73 MPa, Force=1949 N
+2026-01-07 23:16:14.881 [DEBUG] [onStateChanged]: Machine state changed: 4
+2026-01-07 23:16:14.931 [DEBUG] [onStateChanged]: Machine state changed: 1
+2026-01-07 23:16:14.931 [INFO] [onTestCompleted]: Test completed: ID=1
+2026-01-07 23:16:14.932 [INFO] [calculateResults]: Results calculated: Max Stress=60.58 MPa, E=3.00 GPa
+2026-01-07 23:16:14.983 [DEBUG] [saveDataPoints]: Saved 4554 data points for test ID=1
+2026-01-07 23:16:14.983 [INFO] [saveTest]: Test saved: ID=1, Sample=test1
+2026-01-07 23:16:14.983 [INFO] [updateTest]: Test updated: ID=1
+2026-01-07 23:16:14.983 [INFO] [completeTest]: Test completed: ID=1, Duration=48s
+2026-01-07 23:16:16.411 [INFO] [stopTest]: Test stopped at 8.00% strain, 4554 data points
+2026-01-07 23:16:19.954 [DEBUG] [getAllTests]: Retrieved 1 tests
+2026-01-07 23:16:19.954 [INFO] [loadTests]: Loaded 1 tests
+2026-01-07 23:16:24.344 [DEBUG] [clearData]: Chart data cleared
+2026-01-07 23:16:36.506 [INFO] [closeEvent]: Application closing
+2026-01-07 23:16:36.508 [INFO] [main]: Application shutting down
+2026-01-07 23:16:36.508 [INFO] [~MainWindow]: MainWindow destroyed
+2026-01-07 23:16:36.514 [INFO] [onDriverDisconnected]: Driver disconnected
+2026-01-07 23:16:36.514 [DEBUG] [onStateChanged]: Machine state changed: 0
+2026-01-07 23:16:36.514 [INFO] [disconnect]: MockUTMDriver disconnected
+2026-01-07 23:16:36.514 [INFO] [~MockUTMDriver]: MockUTMDriver destroyed
+2026-01-07 23:16:36.514 [INFO] [close]: Database closed
+2026-01-07 23:16:36.514 [INFO] [main]: === Horizon UTM Stopped ===
