@@ -114,11 +114,11 @@ bool MockUTMDriver::startTest(double speedMmPerMin, double forceLimitN) {
     m_testStartTime = QDateTime::currentMSecsSinceEpoch();
 
     // Start data generation at 100 Hz
-    m_timer->start(1000 / m_samplingRateHz);
+    m_timer->start(static_cast<int>(1000 / m_samplingRateHz));
 
     emit stateChanged(m_state);
 
-    LOG_INFO(QString("Test started: speed=%.2f mm/min, limit=%.0f N")
+    LOG_INFO(QString("Test started: speed=%1 mm/min, limit=%2 N")
         .arg(m_speed).arg(m_forceLimit));
 
     return true;
@@ -247,8 +247,8 @@ void MockUTMDriver::generateDataPoint() {
 
     // Log every 100 points
     if (m_dataPointCount % 100 == 0) {
-        LOG_DEBUG(QString("Data point %1: Strain=%.3f%%, Stress=%.2f MPa, Force=%.0f N")
-            .arg(m_dataPointCount).arg(m_currentStrain).arg(m_currentStress).arg(m_currentForce));
+        LOG_DEBUG(QString("Data point %1: Strain=%2%, Stress=%3 MPa, Force=%4 N")
+            .arg(m_dataPointCount).arg(m_currentStrain, 0, 'f', 3).arg(m_currentStress, 0, 'f', 2).arg(m_currentForce, 0, 'f', 0));
     }
 }
 

@@ -10,10 +10,10 @@ StatusIndicator::StatusIndicator(QWidget* parent)
 {
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
-    
+
     m_label = new QLabel("Disconnected", this);
     layout->addWidget(m_label);
-    
+
     setFixedSize(120, 24);
 }
 
@@ -25,24 +25,24 @@ void StatusIndicator::setConnected(bool connected) {
     }
 }
 
-void StatusIndicator::paintEvent(QPaintEvent* event) {
+void StatusIndicator::paintEvent(QPaintEvent* /*event*/) {
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
-    
+
     // Draw LED indicator
     QRect ledRect(5, 4, 16, 16);
-    
+
     QColor ledColor = m_connected ? QColor(0, 200, 0) : QColor(200, 0, 0);
-    
+
     // Outer glow
     painter.setPen(Qt::NoPen);
     painter.setBrush(ledColor.lighter(120));
     painter.drawEllipse(ledRect.adjusted(-2, -2, 2, 2));
-    
+
     // LED body
     painter.setBrush(ledColor);
     painter.drawEllipse(ledRect);
-    
+
     // Highlight
     QRadialGradient gradient(ledRect.center(), ledRect.width() / 2);
     gradient.setColorAt(0, QColor(255, 255, 255, 180));

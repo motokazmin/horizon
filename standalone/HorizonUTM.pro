@@ -61,6 +61,7 @@ CONFIG(release, debug|release) {
 
 # Include paths
 INCLUDEPATH += $$PWD/src
+INCLUDEPATH += $$PWD/src/third_party
 
 #-------------------------------------------------
 # Source Files

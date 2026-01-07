@@ -2,6 +2,7 @@
 #include "TestController.h"
 #include "core/Logger.h"
 #include <QDebug>
+#include <QMetaType>
 
 namespace HorizonUTM {
 
@@ -12,26 +13,35 @@ HardwareController::HardwareController(IUTMDriver* driver, TestController* testC
     , m_currentTest(nullptr)
     , m_testInProgress(false)
 {
-    qDebug() << "=== HardwareController: Connecting signals ===";
-    qDebug() << "=== Driver pointer:" << m_driver;
-    qDebug() << "=== Driver metaObject:" << m_driver->metaObject()->className();
-    qDebug() << "=== This pointer:" << this;
+    // Register metatypes for queued connections
+    qRegisterMetaType<HorizonUTM::MachineState>("HorizonUTM::MachineState");
+    qRegisterMetaType<HorizonUTM::SensorData>("HorizonUTM::SensorData");
 
-    // Connect driver signals - using old syntax for compatibility
-    bool ok1 = connect(m_driver, SIGNAL(connected()), this, SLOT(onDriverConnected()));
-    qDebug() << "=== Connected 'connected' signal (old syntax):" << ok1;
+    // Connect driver signals - using old SIGNAL/SLOT syntax for all
+    bool ok1 = QObject::connect(m_driver, SIGNAL(connected()),
+                                this, SLOT(onDriverConnected()));
+    qDebug() << "=== Connected 'connected':" << ok1;
 
-    bool ok2 = connect(m_driver, SIGNAL(disconnected()), this, SLOT(onDriverDisconnected()));
-    qDebug() << "=== Connected 'disconnected' signal:" << ok2;
+    bool ok2 = QObject::connect(m_driver, SIGNAL(disconnected()),
+                                this, SLOT(onDriverDisconnected()));
+    qDebug() << "=== Connected 'disconnected':" << ok2;
 
-    bool ok3 = connect(m_driver, SIGNAL(stateChanged(HorizonUTM::MachineState)),
-                      this, SLOT(onStateChanged(HorizonUTM::MachineState)));
-    qDebug() << "=== Connected 'stateChanged' signal:" << ok3;
+    bool ok3 = QObject::connect(m_driver, SIGNAL(testCompleted()),
+                                this, SLOT(onTestCompleted()));
+    qDebug() << "=== Connected 'testCompleted':" << ok3;
 
-    connect(m_driver, SIGNAL(sensorDataReceived(HorizonUTM::SensorData)),
-            this, SLOT(onSensorDataReceived(HorizonUTM::SensorData)));
-    connect(m_driver, SIGNAL(testCompleted()), this, SLOT(onTestCompleted()));
-    connect(m_driver, SIGNAL(errorOccurred(QString)), this, SLOT(onErrorOccurred(QString)));
+    bool ok4 = QObject::connect(m_driver, SIGNAL(errorOccurred(QString)),
+                                this, SLOT(onErrorOccurred(QString)));
+    qDebug() << "=== Connected 'errorOccurred':" << ok4;
+
+    // For custom types, use old syntax WITHOUT namespace in both SIGNAL and SLOT
+    bool ok5 = QObject::connect(m_driver, SIGNAL(stateChanged(MachineState)),
+                                this, SLOT(onStateChanged(MachineState)));
+    qDebug() << "=== Connected 'stateChanged':" << ok5;
+
+    bool ok6 = QObject::connect(m_driver, SIGNAL(sensorDataReceived(SensorData)),
+                                this, SLOT(onSensorDataReceived(SensorData)));
+    qDebug() << "=== Connected 'sensorDataReceived':" << ok6;
 
     LOG_INFO("HardwareController created");
 }
@@ -236,7 +246,12 @@ void HardwareController::onStateChanged(MachineState state) {
 }
 
 void HardwareController::onSensorDataReceived(SensorData data) {
+    qDebug() << "=== HardwareController::onSensorDataReceived CALLED ===";
+    qDebug() << "=== m_testInProgress:" << m_testInProgress;
+    qDebug() << "=== m_currentTest:" << m_currentTest;
+
     if (!m_testInProgress || !m_currentTest) {
+        qDebug() << "=== RETURNING: Test not in progress or currentTest is null ===";
         return;
     }
 
@@ -244,6 +259,7 @@ void HardwareController::onSensorDataReceived(SensorData data) {
     m_testController->processSensorData(*m_currentTest, data);
 
     // Forward to UI
+    qDebug() << "=== EMITTING sensorDataReceived ===";
     emit sensorDataReceived(data);
 }
 
