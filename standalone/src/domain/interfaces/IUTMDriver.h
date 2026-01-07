@@ -17,6 +17,7 @@ class IUTMDriver : public QObject {
     Q_OBJECT
 
 public:
+    explicit IUTMDriver(QObject* parent = nullptr) : QObject(parent) {}
     virtual ~IUTMDriver() = default;
     
     /**
@@ -28,8 +29,9 @@ public:
     
     /**
      * @brief Disconnect from the UTM hardware
+     * @return true if disconnected successfully
      */
-    virtual void disconnect() = 0;
+    virtual bool disconnect() = 0;
     
     /**
      * @brief Check if currently connected to hardware
@@ -71,9 +73,21 @@ public:
     virtual bool setSpeed(double mmPerMin) = 0;
     
     /**
+     * @brief Get current speed setting
+     * @return Speed in mm/min
+     */
+    virtual double getSpeed() const = 0;
+    
+    /**
      * @brief Zero all sensors (force, extension)
      */
-    virtual bool zeroSensors() = 0;
+    virtual bool zero() = 0;
+    
+    /**
+     * @brief Get current sensor data
+     * @return Current sensor readings
+     */
+    virtual SensorData getCurrentData() const = 0;
 
 signals:
     /**

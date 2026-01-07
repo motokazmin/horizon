@@ -1,8 +1,9 @@
 #pragma once
 
 #include <QVector>
-#include <memory>
+#include <QDateTime>
 #include "domain/entities/Test.h"
+#include "domain/entities/Sample.h"
 #include "domain/value_objects/SensorData.h"
 
 namespace HorizonUTM {
@@ -17,54 +18,33 @@ class ITestRepository {
 public:
     virtual ~ITestRepository() = default;
     
-    /**
-     * @brief Save a new test to the repository
-     * @param test Test entity to save
-     * @return true if save successful
-     */
+    // Test operations
     virtual bool saveTest(const Test& test) = 0;
-    
-    /**
-     * @brief Update an existing test
-     * @param test Test entity with updated data
-     * @return true if update successful
-     */
     virtual bool updateTest(const Test& test) = 0;
-    
-    /**
-     * @brief Retrieve a test by ID
-     * @param testId Unique test identifier
-     * @return Test entity or nullptr if not found
-     */
-    virtual std::unique_ptr<Test> getTest(int testId) = 0;
-    
-    /**
-     * @brief Get all tests from repository
-     * @return Vector of all tests
-     */
-    virtual QVector<Test> getAllTests() = 0;
-    
-    /**
-     * @brief Save sensor data points for a test
-     * @param testId Test identifier
-     * @param data Vector of sensor data points
-     * @return true if save successful
-     */
-    virtual bool saveDataPoints(int testId, const QVector<SensorData>& data) = 0;
-    
-    /**
-     * @brief Retrieve all data points for a test
-     * @param testId Test identifier
-     * @return Vector of sensor data points
-     */
-    virtual QVector<SensorData> getDataPoints(int testId) = 0;
-    
-    /**
-     * @brief Delete a test and its data points
-     * @param testId Test identifier
-     * @return true if deletion successful
-     */
     virtual bool deleteTest(int testId) = 0;
+    
+    virtual Test getTest(int testId) const = 0;
+    virtual QVector<Test> getAllTests() const = 0;
+    virtual QVector<Test> getTestsByStatus(TestStatus status) const = 0;
+    virtual QVector<Test> getTestsByDateRange(const QDateTime& start, const QDateTime& end) const = 0;
+    
+    // Data points operations
+    virtual bool saveDataPoints(int testId, const QVector<SensorData>& data) = 0;
+    virtual QVector<SensorData> getDataPoints(int testId) const = 0;
+    virtual bool deleteDataPoints(int testId) = 0;
+    
+    // Sample queue operations
+    virtual bool saveSample(const Sample& sample) = 0;
+    virtual bool updateSample(const Sample& sample) = 0;
+    virtual bool deleteSample(int sampleId) = 0;
+    
+    virtual Sample getSample(int sampleId) const = 0;
+    virtual QVector<Sample> getAllSamples() const = 0;
+    virtual QVector<Sample> getSamplesByStatus(SampleStatus status) const = 0;
+    
+    // Statistics
+    virtual int getTestCount() const = 0;
+    virtual int getTestCountByStatus(TestStatus status) const = 0;
 };
 
 } // namespace HorizonUTM

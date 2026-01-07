@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QString>
+#include <QStringList>
+#include <QVector>
 #include "domain/entities/Test.h"
 
 namespace HorizonUTM {
@@ -24,16 +26,24 @@ public:
     virtual bool exportTest(const Test& test, const QString& filePath) = 0;
     
     /**
-     * @brief Get the file extension for this export format
-     * @return File extension (e.g., "csv", "pdf", "xlsx")
+     * @brief Export multiple tests to a file
+     * @param tests Vector of tests to export
+     * @param filePath Full path where file should be saved
+     * @return true if export successful
      */
-    virtual QString getFileExtension() const = 0;
+    virtual bool exportTests(const QVector<Test>& tests, const QString& filePath) = 0;
     
     /**
-     * @brief Get file dialog filter string
-     * @return Filter string for QFileDialog (e.g., "CSV Files (*.csv)")
+     * @brief Get supported file extensions
+     * @return List of extensions (e.g., ["csv"])
      */
-    virtual QString getFilterString() const = 0;
+    virtual QStringList getSupportedExtensions() const = 0;
+    
+    /**
+     * @brief Get file type description
+     * @return Description for file dialog (e.g., "CSV Files (*.csv)")
+     */
+    virtual QString getFileTypeDescription() const = 0;
 };
 
 } // namespace HorizonUTM
