@@ -11,6 +11,7 @@ namespace HorizonUTM {
 
 class DashboardView;
 class SampleQueueView;
+class ResultsView;
 class SettingsDialog;
 class TestController;
 class HardwareController;
@@ -37,6 +38,7 @@ private slots:
     // Navigation
     void showDashboard();
     void showSampleQueue();
+    void showResults();
     void showSettings();
     
     // Actions
@@ -73,6 +75,7 @@ private:
     QStackedWidget* m_stackedWidget;
     DashboardView* m_dashboardView;
     SampleQueueView* m_sampleQueueView;
+    ResultsView* m_resultsView;
     SettingsDialog* m_settingsDialog;
     
     // UI Elements
@@ -90,6 +93,7 @@ private:
     QAction* m_exportAction;
     QAction* m_dashboardAction;
     QAction* m_sampleQueueAction;
+    QAction* m_resultsAction;
     QAction* m_settingsAction;
     QAction* m_exitAction;
 };

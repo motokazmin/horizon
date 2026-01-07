@@ -56,4 +56,15 @@ qint64 Test::getDuration() const {
     return m_startTime.secsTo(m_endTime);
 }
 
+QVector<QPair<double, double>> Test::getStressStrainData() const {
+    QVector<QPair<double, double>> result;
+    result.reserve(m_data.size());
+    
+    for (const SensorData& data : m_data) {
+        result.append(qMakePair(data.strain, data.stress));
+    }
+    
+    return result;
+}
+
 } // namespace HorizonUTM

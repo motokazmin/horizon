@@ -97,6 +97,8 @@ SOURCES += \
     # Presentation - Views
     src/presentation/views/DashboardView.cpp \
     src/presentation/views/SampleQueueView.cpp \
+    src/presentation/views/ResultsView.cpp \
+    src/presentation/views/TestDetailsDialog.cpp \
     src/presentation/views/SettingsDialog.cpp \
     src/presentation/views/TestConfigDialog.cpp \
     # Presentation - Widgets
@@ -148,6 +150,8 @@ HEADERS += \
     src/presentation/MainWindow.h \
     src/presentation/views/DashboardView.h \
     src/presentation/views/SampleQueueView.h \
+    src/presentation/views/ResultsView.h \
+    src/presentation/views/TestDetailsDialog.h \
     src/presentation/views/SettingsDialog.h \
     src/presentation/views/TestConfigDialog.h \
     src/presentation/widgets/MetricWidget.h \

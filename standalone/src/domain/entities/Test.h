@@ -129,6 +129,12 @@ public:
      * @brief Get number of data points collected
      */
     int getDataPointCount() const { return m_data.size(); }
+    
+    /**
+     * @brief Get stress-strain data points for plotting
+     * @return Vector of (strain, stress) pairs
+     */
+    QVector<QPair<double, double>> getStressStrainData() const;
 
 private:
     // Identification

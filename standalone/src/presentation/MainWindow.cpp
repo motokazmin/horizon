@@ -1,6 +1,7 @@
 #include "MainWindow.h"
 #include "views/DashboardView.h"
 #include "views/SampleQueueView.h"
+#include "views/ResultsView.h"
 #include "views/SettingsDialog.h"
 #include "widgets/StatusIndicator.h"
 #include "application/controllers/TestController.h"
@@ -58,10 +59,12 @@ void MainWindow::setupUi() {
     // Create views
     m_dashboardView = new DashboardView(m_testController, m_hardwareController, this);
     m_sampleQueueView = new SampleQueueView(m_testController, this);
+    m_resultsView = new ResultsView(m_testController, this);
     
     // Add views to stack
     m_stackedWidget->addWidget(m_dashboardView);
     m_stackedWidget->addWidget(m_sampleQueueView);
+    m_stackedWidget->addWidget(m_resultsView);
     
     // Show dashboard by default
     m_stackedWidget->setCurrentWidget(m_dashboardView);
@@ -127,6 +130,10 @@ void MainWindow::setupMenuBar() {
     m_sampleQueueAction = viewMenu->addAction("&Sample Queue");
     m_sampleQueueAction->setShortcut(QKeySequence("Ctrl+2"));
     connect(m_sampleQueueAction, &QAction::triggered, this, &MainWindow::showSampleQueue);
+    
+    m_resultsAction = viewMenu->addAction("&Results");
+    m_resultsAction->setShortcut(QKeySequence("Ctrl+3"));
+    connect(m_resultsAction, &QAction::triggered, this, &MainWindow::showResults);
     
     // Settings menu
     QMenu* settingsMenu = menuBar->addMenu("&Settings");
@@ -207,6 +214,12 @@ void MainWindow::showSampleQueue() {
     m_statusLabel->setText("Sample Queue");
 }
 
+void MainWindow::showResults() {
+    m_resultsView->refreshTestList();
+    m_stackedWidget->setCurrentWidget(m_resultsView);
+    m_statusLabel->setText("Test Results");
+}
+
 void MainWindow::showSettings() {
     m_settingsDialog->exec();
 }
@@ -214,13 +227,7 @@ void MainWindow::showSettings() {
 // Action slots
 
 void MainWindow::onConnectHardware() {
-    qDebug() << "=== CONNECT BUTTON PRESSED ===";
-
-    bool result = m_hardwareController->connectToHardware("mock");
-    qDebug() << "=== connectToHardware returned:" << result;
-    qDebug() << "=== isConnected:" << m_hardwareController->isConnected();
-
-    if (result) {
+    if (m_hardwareController->connectToHardware("mock")) {
         LOG_INFO("Hardware connection initiated");
     } else {
         QMessageBox::critical(this, "Connection Error", "Failed to connect to hardware");
