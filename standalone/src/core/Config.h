@@ -10,6 +10,9 @@ class Config {
 public:
     static Config& instance();
     
+    void load();
+    void save();
+    
     // Database
     QString getDatabasePath() const;
     void setDatabasePath(const QString& path);

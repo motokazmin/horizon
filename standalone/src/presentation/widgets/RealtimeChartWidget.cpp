@@ -1,1 +1,2 @@
 #include "RealtimeChartWidget.h"
+// Stub

@@ -19,6 +19,7 @@ enum class LogLevel {
 class Logger {
 public:
     static Logger& instance();
+    static void initialize(LogLevel level = LogLevel::Info, const QString& logFile = "horizon_utm.log");
     
     void log(LogLevel level, const QString& message, const QString& source = "");
     

@@ -17,6 +17,15 @@ Config& Config::instance() {
     return instance;
 }
 
+void Config::load() {
+    // Settings are loaded automatically by QSettings
+    m_settings->sync();
+}
+
+void Config::save() {
+    m_settings->sync();
+}
+
 QString Config::getDatabasePath() const {
     QString defaultPath = getAppDataPath() + "/" + Constants::DB_NAME;
     return m_settings->value("database/path", defaultPath).toString();

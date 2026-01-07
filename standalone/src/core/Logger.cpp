@@ -28,6 +28,14 @@ Logger::~Logger() {
     }
 }
 
+void Logger::initialize(LogLevel level, const QString& logFile) {
+    Logger& logger = instance();
+    logger.setLogLevel(level);
+    if (!logFile.isEmpty()) {
+        logger.setLogFile(logFile);
+    }
+}
+
 Logger& Logger::instance() {
     static Logger instance;
     return instance;
